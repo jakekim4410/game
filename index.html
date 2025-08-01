@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>서진 서바이벌 특공대</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: none;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #1f2937 0%, #0c0a09 100%);
+        }
+        
+        @keyframes pulse-bg {
+            0% { background-color: #1f2937; }
+            50% { background-color: #374151; }
+            100% { background-color: #1f2937; }
+        }
+        
+        @keyframes neon-glow {
+            0%, 100% { 
+                box-shadow: 0 0 20px #fbbf24, 0 0 40px #fbbf24, 0 0 60px #fbbf24;
+            }
+            50% { 
+                box-shadow: 0 0 10px #fbbf24, 0 0 20px #fbbf24, 0 0 30px #fbbf24;
+            }
+        }
+        
+        @keyframes title-pulse {
+            0%, 100% { 
+                text-shadow: 0 0 20px #fbbf24, 0 0 40px #f59e0b, 0 0 60px #d97706;
+                transform: scale(1);
+            }
+            50% { 
+                text-shadow: 0 0 30px #fbbf24, 0 0 60px #f59e0b, 0 0 90px #d97706;
+                transform: scale(1.05);
+            }
+        }
+        
+        #game-canvas {
+            background: linear-gradient(45deg, #111827 0%, #1f2937 50%, #111827 100%);
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(239, 68, 68, 0.1) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 400px 400px, 400px 400px, 50px 50px, 50px 50px;
+            cursor: none;
+            animation: pulse-bg 8s infinite ease-in-out;
+            border: 2px solid rgba(251, 191, 36, 0.3);
+        }
+        
+        .upgrade-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            border: 2px solid #6b7280;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upgrade-card::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706, #fbbf24);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .upgrade-card:hover {
+            transform: translateY(-15px) scale(1.05);
+            box-shadow: 
+                0 20px 40px rgba(251, 191, 36, 0.3),
+                0 0 30px rgba(251, 191, 36, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .upgrade-card:hover::before {
+            opacity: 1;
+            animation: neon-glow 1s ease-in-out infinite alternate;
+        }
+        
+        .modal-button {
+            background: linear-gradient(145deg, #fbbf24, #f59e0b);
+            box-shadow: 
+                0 8px 25px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .modal-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .modal-button:hover {
+            background: linear-gradient(145deg, #facc15, #fbbf24);
+            box-shadow: 
+                0 12px 35px rgba(251, 191, 36, 0.6),
+                0 0 30px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: translateY(-5px);
+        }
+        
+        .modal-button:active {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.4);
+        }
+        
+        .modal-backdrop {
+            background: 
+                radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.95) 100%);
+            backdrop-filter: blur(12px) saturate(1.5);
+        }
+        
+        .ui-bar-gradient {
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ui-bar-gradient::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        #hp-bar { 
+            background: linear-gradient(45deg, #ef4444, #dc2626, #b91c1c);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        #xp-bar { 
+            background: linear-gradient(45deg, #3b82f6, #2563eb, #1d4ed8);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .text-glow {
+            animation: title-pulse 2s ease-in-out infinite;
+        }
+        
+        .ui-panel {
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            box-shadow: 
+                0 8px 32px rgba(0,0,0,0.5),
+                inset 0 1px 0 rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .kill-counter {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .game-title {
+            background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Enhanced visual effects */
+        @keyframes energy-wave {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { transform: scale(3) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes hero-thruster {
+            0%, 100% { transform: scaleY(1); opacity: 1; }
+            50% { transform: scaleY(1.5); opacity: 0.7; }
+        }
+
+        @keyframes level-up-burst {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.8; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen text-white p-2">
+
+    <!-- Game UI -->
+    <div id="game-ui" class="absolute top-0 left-0 w-full p-4 z-10 text-white">
+        <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
+            <div class="flex-1">
+                <div class="text-sm font-bold mb-1">HP</div>
+                <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
+                    <div id="hp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="flex-1">
+                <div class="text-sm font-bold mb-1">XP</div>
+                <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
+                    <div id="xp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="text-center ui-panel p-3 rounded-lg">
+                <div class="text-lg font-bold">LV: <span id="level" class="text-amber-400">1</span></div>
+                <div class="text-lg font-bold">TIME: <span id="timer" class="text-blue-400">00:00</span></div>
+            </div>
+            <div class="text-center ui-panel p-3 rounded-lg">
+                <div class="text-lg font-bold">KILLS</div>
+                <div class="text-3xl font-bold text-red-400" id="kill-count">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Start Modal -->
+    <div id="start-modal" class="absolute inset-0 modal-backdrop flex flex-col justify-center items-center z-30">
+        <h1 class="text-8xl font-bold text-amber-400 mb-12 text-glow game-title">서진 서바이벌 특공대</h1>
+        <div class="mb-8 text-center text-gray-300">
+            <p class="text-xl mb-2">🚀 무한 생존 액션 슈터</p>
+            <p class="text-lg">적들을 물리치고 최대한 오래 살아남으세요!</p>
+        </div>
+        <button id="start-button" class="px-12 py-6 text-black font-bold rounded-xl text-3xl modal-button">
+            🎮 게임 시작
+        </button>
+    </div>
+
+    <!-- Level Up Modal -->
+    <div id="level-up-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-20 hidden">
+        <h2 class="text-6xl font-bold text-amber-400 mb-8 animate-pulse text-glow">⚡ 레벨 업! ⚡</h2>
+        <p class="text-xl text-gray-300 mb-8">강화할 능력을 선택하세요</p>
+        <div id="upgrade-options" class="flex flex-col sm:flex-row gap-8">
+            <!-- Upgrade cards will be generated here -->
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-20 hidden">
+        <h2 class="text-7xl font-bold text-red-500 mb-6 text-glow">💀 게임 오버 💀</h2>
+        <div class="bg-black/50 p-8 rounded-xl border border-red-500/30 mb-8 text-center">
+            <p class="text-2xl mb-3">🕐 생존 시간: <span id="final-time" class="font-bold text-amber-300"></span></p>
+            <p class="text-2xl mb-3">⚔️ 처치한 적: <span id="final-kills" class="font-bold text-red-400"></span></p>
+        </div>
+        <button id="restart-button" class="mt-4 px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
+            🔄 다시 도전
+        </button>
+    </div>
+
+    <!-- Revive Modal -->
+    <div id="revive-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-50 hidden">
+        <h2 class="text-6xl font-bold text-green-400 mb-6 text-glow">✨ 부활 기회! ✨</h2>
+        <div class="bg-black/50 p-8 rounded-xl border border-green-500/30 mb-8 text-center">
+            <p class="text-2xl text-gray-200 mb-4">광고를 시청하고 게임을 이어가세요!</p>
+            <p class="text-lg text-green-300">💚 완전한 체력으로 부활합니다</p>
+        </div>
+        <button id="watch-ad-button" class="px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
+            📺 광고 보고 이어하기
+        </button>
+        <div id="ad-timer" class="text-xl text-gray-300 mt-6 hidden bg-black/50 p-4 rounded-lg">
+            ⏳ 광고 시청 중... <span id="ad-countdown" class="text-amber-400 font-bold">3</span>초
+        </div>
+        <button id="end-game-button" class="mt-6 px-8 py-4 text-gray-400 hover:text-gray-200 text-lg transition-colors">
+            ❌ 게임 종료
+        </button>
+    </div>
+
+    <!-- Score Submission Modal -->
+    <div id="score-submit-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
+        <h2 class="text-5xl font-bold text-amber-400 mb-6 text-glow">🏆 점수 기록 🏆</h2>
+        <div class="bg-black/50 p-8 rounded-xl border border-amber-500/30 mb-6 text-center">
+            <p class="text-xl text-gray-200 mb-4">당신의 점수를 랭킹에 기록하세요!</p>
+            <div class="mb-6">
+                <label for="player-name-input" class="block text-gray-300 text-lg font-bold mb-3 text-center">✏️ 이름을 입력하세요:</label>
+                <input type="text" id="player-name-input" maxlength="10" placeholder="최대 10자"
+                       class="px-4 py-3 rounded-lg bg-stone-800 text-white border-2 border-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-center text-xl w-64 transition-all">
+            </div>
+        </div>
+        <button id="submit-score-button" class="px-10 py-5 text-black font-bold rounded-xl text-xl modal-button">
+            💾 점수 기록하기
+        </button>
+        <button id="skip-score-button" class="mt-4 text-gray-400 hover:text-gray-200 text-lg transition-colors">
+            ⏭️ 건너뛰기
+        </button>
+    </div>
+
+    <!-- Ranking Display Modal -->
+    <div id="ranking-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
+        <h2 class="text-6xl font-bold text-amber-400 mb-8 text-glow">🏅 명예의 전당 🏅</h2>
+        <div class="bg-black/70 p-8 rounded-xl shadow-2xl w-11/12 max-w-2xl max-h-[70vh] overflow-y-auto border-2 border-amber-500/30 backdrop-blur-sm">
+            <table class="w-full text-left text-gray-200">
+                <thead>
+                    <tr class="border-b-2 border-amber-500/50 text-amber-300">
+                        <th class="py-4 px-4 text-center">🏆 순위</th>
+                        <th class="py-4 px-4">👤 이름</th>
+                        <th class="py-4 px-4 text-right">🕐 시간</th>
+                        <th class="py-4 px-4 text-right">⚔️ 처치</th>
+                    </tr>
+                </thead>
+                <tbody id="ranking-list">
+                    <!-- Rankings will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+        <button id="close-ranking-button" class="mt-8 px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
+            ✖️ 닫기
+        </button>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const hpBar = document.getElementById('hp-bar');
+        const xpBar = document.getElementById('xp-bar');
+        const levelEl = document.getElementById('level');
+        const timerEl = document.getElementById('timer');
+        const killCountEl = document.getElementById('kill-count');
+        const startModal = document.getElementById('start-modal');
+        const startButton = document.getElementById('start-button');
+        const levelUpModal = document.getElementById('level-up-modal');
+        const upgradeOptionsContainer = document.getElementById('upgrade-options');
+        const gameOverModal = document.getElementById('game-over-modal'); 
+        const finalTimeEl = document.getElementById('final-time');
+        const finalKillsEl = document.getElementById('final-kills');
+        const restartButton = document.getElementById('restart-button');
+
+        // Revive UI Elements
+        const reviveModal = document.getElementById('revive-modal');
+        const watchAdButton = document.getElementById('watch-ad-button');
+        const adTimerEl = document.getElementById('ad-timer');
+        const adCountdownEl = document.getElementById('ad-countdown');
+        const endGameButton = document.getElementById('end-game-button');
+
+        // Ranking UI Elements
+        const scoreSubmitModal = document.getElementById('score-submit-modal');
+        const playerNameInput = document.getElementById('player-name-input');
+        const submitScoreButton = document.getElementById('submit-score-button'); 
+        const skipScoreButton = document.getElementById('skip-score-button');
+        const rankingModal = document.getElementById('ranking-modal');
+        const rankingList = document.getElementById('ranking-list');
+        const closeRankingButton = document.getElementById('close-ranking-button');
+
+        let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+        let isPaused = true;
+        let gameLoopId;
+        let lastTimestamp = 0;
+        let particles = [];
+        let screenShake = { intensity: 0, duration: 0, x: 0, y: 0 };
+        let hasRevived = false;
+        let backgroundParticles = [];
+        let isGameOverSoundPlayed = false; // Added flag to control game over sound
+
+        // Firebase variables
+        let app;
+        let db;
+        let auth;
+        let userId;
+        let appId;
+
+        /**
+         * Initializes Firebase application and authenticates the user.
+         */
+        async function initFirebase() {
+            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+            if (Object.keys(firebaseConfig).length === 0) {
+                console.error("Firebase config is missing. Cannot initialize Firebase.");
+                return;
+            }
+
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                console.log("Firebase initialized and authenticated. User ID:", userId);
+            } catch (error) {
+                console.error("Firebase authentication failed:", error);
+                userId = crypto.randomUUID();
+            }
+        }
+
+        // Initialize background particles with enhanced effects
+        function initBackgroundParticles() {
+            backgroundParticles = [];
+            for (let i = 0; i < 80; i++) {
+                backgroundParticles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.8,
+                    vy: (Math.random() - 0.5) * 0.8,
+                    size: Math.random() * 3 + 0.5,
+                    alpha: Math.random() * 0.8 + 0.2,
+                    color: Math.random() > 0.6 ? '#3b82f6' : (Math.random() > 0.3 ? '#fbbf24' : '#8b5cf6'),
+                    pulse: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        function updateBackgroundParticles() {
+            backgroundParticles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.pulse += 0.05;
+                
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+            });
+        }
+
+        function drawBackgroundParticles() {
+            backgroundParticles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha * (0.5 + 0.5 * Math.sin(p.pulse));
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // --- Sound Effects ---
+        const synth = new Tone.PolySynth(Tone.Synth, { 
+            oscillator: { type: "fatsawtooth", count: 3, spread: 30 }, 
+            envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.2 } 
+        }).toDestination();
+        
+        const hitSound = new Tone.MembraneSynth({ 
+            pitchDecay: 0.05, octaves: 8, 
+            envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.8, attackCurve: "exponential" } 
+        }).toDestination();
+        
+        const levelUpSound = new Tone.Synth({ 
+            oscillator: { type: 'triangle' }, 
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0.3, release: 1 } 
+        }).toDestination();
+        
+        const gameOverSound = new Tone.AMSynth({ 
+            harmonicity: 1.5, 
+            envelope: { attack: 0.1, decay: 1, sustain: 0.5, release: 1 } 
+        }).toDestination();
+        
+        const collectXPSound = new Tone.PluckSynth({ 
+            attackNoise: 2, dampening: 8000, resonance: 0.9 
+        }).toDestination();
+
+        let lastXPSoundTime = 0;
+        const xpSoundCooldown = 50;
+        let lastHitSoundTime = 0;
+        const hitSoundCooldown = 100;
+
+        function playShootSound() { synth.triggerAttackRelease("C3", "16n", Tone.now(), 0.5); }
+        
+        function playHitSound() {
+            const currentTime = Tone.now() * 1000; 
+            if (currentTime - lastHitSoundTime > hitSoundCooldown) {
+                hitSound.triggerAttackRelease("C2", "16n", Tone.now(), 0.8);
+                lastHitSoundTime = currentTime;
+            }
+        }
+        
+        function playLevelUpSound() { levelUpSound.triggerAttackRelease("G4", "8n"); }
+        
+        // Modified: Added a flag to ensure game over sound plays only once
+        function playGameOverSound() { 
+            if (isGameOverSoundPlayed) return; // Prevent multiple plays
+            gameOverSound.triggerAttackRelease("C2", "1n"); 
+            isGameOverSoundPlayed = true; // Set flag after playing
+        }
+        
+        function playCollectXPSound() {
+            const currentTime = Tone.now() * 1000; 
+            if (currentTime - lastXPSoundTime > xpSoundCooldown) {
+                collectXPSound.triggerAttackRelease("C5", "32n", Tone.now(), 0.9);
+                lastXPSoundTime = currentTime;
+            }
+        }
+
+        // --- Game Constants (Enhanced for faster leveling) ---
+        const PLAYER_SPEED = 3.5;
+        const PROJECTILE_SPEED = 8;
+        const PROJECTILE_BASE_RADIUS = 5;
+        const ENEMY_SPEED_BASE = 0.2;
+        const ENEMY_SPEED_SCALING_PER_LEVEL = 0.05;
+        const ENEMY_HP_BASE = 1;
+        const ENEMY_HP_SCALING_PER_LEVEL = 0;
+        const ENEMY_SPAWN_INTERVAL = 1200;
+        const XP_GEM_SIZE = 12;
+        const XP_PER_LEVEL_BASE = 40; // Reduced from 70 to 40 for faster leveling
+
+        const MAX_ENEMY_SPEED_LEVEL = 5;
+        const MAX_ENEMY_HP_LEVEL = 8;
+        const ENEMY_COUNT_INCREASE_PER_LEVEL = 0.3;
+        const BOSS_APPEAR_TIME = 1200000;
+        const BOSS_RADIUS = 80;
+        const BOSS_HP = 120;
+        const BOSS_SPEED = 0.2;
+        const BOSS_DAMAGE = 20;
+        const POWER_MISSILE_INTERVAL = 5000;
+
+        // --- Game State ---
+        const gameState = {
+            player: null,
+            enemies: [],
+            projectiles: [],
+            xpGems: [],
+            pulseEffects: [],
+            levelUpEffects: [], // New array for level up visual effects
+            upgrades: {
+                attackSpeed: { name: "⚡️ 연사 속도 증가", description: "공격 속도가 15% 빨라집니다.", apply: () => gameState.player.attackSpeed = Math.max(30, gameState.player.attackSpeed * 0.85) },
+                hp: { name: "❤️ 최대 HP 증가", description: "최대 HP가 25 증가하고 모두 회복합니다.", apply: () => { gameState.player.maxHp += 25; gameState.player.hp = gameState.player.maxHp; } },
+                speed: { name: "👟 이동 속도 증가", description: "이동 속도가 크게 빨라집니다.", apply: () => gameState.player.speed += 0.8 },
+                magnet: { name: "🧲 자석 범위 증가", description: "XP 획득 범위가 크게 넓어집니다.", apply: () => gameState.player.magnetRadius += 80 },
+                diagonalShot: { name: "💥 대각선 발사", description: "4개의 대각선 방향으로 투사체를 추가 발사합니다.", apply: () => gameState.player.hasDiagonalShot = true, once: true },
+                powerMissile: { name: "🚀 초강력 미사일", description: "매 5초마다 강력한 관통 미사일을 발사합니다.", apply: () => gameState.player.hasPowerMissile = true, once: true },
+                aoePulse: { name: "🌀 에너지 파동", description: "주기적으로 주변 적들에게 강력한 피해를 주는 파동을 방출합니다.", apply: () => gameState.player.hasAoePulse = true, once: true }
+            },
+            gameTime: 0,
+            killCount: 0,
+            lastEnemySpawnTime: 0,
+            isBossActive: false,
+            boss: null,
+        };
+
+        // --- Game Object Classes ---
+        class Particle {
+            constructor(x, y, color, size, speed, lifespan, type = 'normal') {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = Math.random() * size + 1;
+                this.lifespan = lifespan;
+                this.initialLifespan = lifespan;
+                const angle = Math.random() * Math.PI * 2;
+                this.vx = Math.cos(angle) * (Math.random() * speed);
+                this.vy = Math.sin(angle) * (Math.random() * speed);
+                this.type = type;
+                this.rotation = 0;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.2;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.lifespan / this.initialLifespan;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                if (this.type === 'glow') {
+                    ctx.shadowColor = this.color;
+                    ctx.shadowBlur = 15;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+                this.lifespan--;
+            }
+        }
+
+        class Player {
+            constructor(x, y) {
+                this.x = x; this.y = y; this.radius = 20;
+                this.hp = 50; this.maxHp = 50;
+                this.xp = 0; this.level = 1; this.xpToNextLevel = XP_PER_LEVEL_BASE;
+                this.damage = 60; // Player's base projectile damage
+                this.attackSpeed = 500;
+                this.projectileSpeed = PROJECTILE_SPEED;
+                this.lastShotTime = 0; 
+                this.autoAim = true;
+                this.magnetRadius = 100; this.speed = PLAYER_SPEED;
+                this.hitTimer = 0;
+                this.hasDiagonalShot = false;
+                this.hasPowerMissile = false;
+                this.lastPowerShotTime = 0;
+                this.hasAoePulse = false;
+                this.aoePulseCooldown = 3000; // Reduced from 5000 to 3000 for more frequent use
+                this.lastAoePulseTime = 0;
+                this.aoePulseRadius = 200; // Increased from 150 to 200
+                this.aoePulseDamage = this.damage; // Energy Pulse damage is now equal to player's missile damage
+                this.thrusterPhase = 0;
+                this.engineGlow = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Calculate rotation to face mouse
+                const angle = Math.atan2(mousePos.y - this.y, mousePos.x - this.x) + Math.PI / 2;
+                ctx.rotate(angle);
+
+                // Enhanced engine glow effect
+                this.engineGlow = Math.sin(this.thrusterPhase) * 0.5 + 0.5;
+                this.thrusterPhase += 0.3;
+
+                // Engine exhaust with enhanced animation
+                ctx.save();
+                ctx.globalAlpha = 0.8 + this.engineGlow * 0.2;
+                ctx.shadowColor = '#ff6b35';
+                ctx.shadowBlur = 20 + this.engineGlow * 10;
+                
+                // Left thruster
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.7, this.radius * 0.8);
+                ctx.lineTo(-this.radius * 0.4, this.radius * (1.5 + this.engineGlow * 0.5));
+                ctx.lineTo(-this.radius * 0.1, this.radius * 0.8);
+                ctx.closePath();
+                const thrusterGradient1 = ctx.createLinearGradient(0, this.radius * 0.8, 0, this.radius * 1.8);
+                thrusterGradient1.addColorStop(0, '#ff6b35');
+                thrusterGradient1.addColorStop(0.5, '#ffd700');
+                thrusterGradient1.addColorStop(1, '#ff4500');
+                ctx.fillStyle = thrusterGradient1;
+                ctx.fill();
+
+                // Right thruster
+                ctx.beginPath();
+                ctx.moveTo(this.radius * 0.7, this.radius * 0.8);
+                ctx.lineTo(this.radius * 0.4, this.radius * (1.5 + this.engineGlow * 0.5));
+                ctx.lineTo(this.radius * 0.1, this.radius * 0.8);
+                ctx.closePath();
+                const thrusterGradient2 = ctx.createLinearGradient(0, this.radius * 0.8, 0, this.radius * 1.8);
+                thrusterGradient2.addColorStop(0, '#ff6b35');
+                thrusterGradient2.addColorStop(0.5, '#ffd700');
+                thrusterGradient2.addColorStop(1, '#ff4500');
+                ctx.fillStyle = thrusterGradient2;
+                ctx.fill();
+                ctx.restore();
+
+                // Main body with enhanced gradient and glow
+                ctx.shadowColor = '#3b82f6';
+                ctx.shadowBlur = 25;
+                const bodyGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius * 1.5);
+                bodyGradient.addColorStop(0, '#60a5fa');
+                bodyGradient.addColorStop(0.5, '#3b82f6');
+                bodyGradient.addColorStop(1, '#1e40af');
+                
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius * 1.5);
+                ctx.lineTo(this.radius, this.radius);
+                ctx.lineTo(0, this.radius * 0.5);
+                ctx.lineTo(-this.radius, this.radius);
+                ctx.closePath();
+                ctx.fillStyle = bodyGradient;
+                ctx.fill();
+                
+                // Enhanced outline
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                // Wing details
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.8, this.radius * 0.2);
+                ctx.lineTo(-this.radius * 1.2, this.radius * 0.6);
+                ctx.lineTo(-this.radius * 0.6, this.radius * 0.8);
+                ctx.closePath();
+                ctx.fillStyle = '#1e40af';
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(this.radius * 0.8, this.radius * 0.2);
+                ctx.lineTo(this.radius * 1.2, this.radius * 0.6);
+                ctx.lineTo(this.radius * 0.6, this.radius * 0.8);
+                ctx.closePath();
+                ctx.fillStyle = '#1e40af';
+                ctx.fill();
+                ctx.stroke();
+
+                // Enhanced cockpit with animation
+                const cockpitPulse = Math.sin(this.thrusterPhase * 0.5) * 0.2 + 1;
+                ctx.save();
+                ctx.scale(cockpitPulse, cockpitPulse);
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 15;
+                ctx.beginPath();
+                ctx.arc(0, -this.radius * 0.3, this.radius * 0.5, 0, Math.PI * 2);
+                const cockpitGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius * 0.5);
+                cockpitGradient.addColorStop(0, '#ffffff');
+                cockpitGradient.addColorStop(0.6, '#60a5fa');
+                cockpitGradient.addColorStop(1, '#3b82f6');
+                ctx.fillStyle = cockpitGradient;
+                ctx.fill();
+                ctx.restore();
+
+                ctx.restore();
+                
+                // Hit flash effect (always drawn relative to canvas, not rotated)
+                if (this.hitTimer > 0) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.hitTimer / 20})`;
+                    ctx.fill();
+                }
+            }
+
+            update(deltaTime) {
+                if (this.hitTimer > 0) this.hitTimer--;
+
+                const dx = mousePos.x - this.x;
+                const dy = mousePos.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance > this.radius / 2) {
+                    const angle = Math.atan2(dy, dx);
+                    this.x += Math.cos(angle) * this.speed * (deltaTime / 16);
+                    this.y += Math.sin(angle) * this.speed * (deltaTime / 16);
+                }
+
+                this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+
+                const currentTime = Date.now();
+                if (currentTime - this.lastShotTime > this.attackSpeed) {
+                    this.shoot();
+                    this.lastShotTime = currentTime;
+                }
+                // Fire powerful missile if upgrade is active and cooldown is ready
+                if (this.hasPowerMissile && currentTime - this.lastPowerShotTime > POWER_MISSILE_INTERVAL) {
+                    this.shootPowerMissile();
+                    this.lastPowerShotTime = currentTime;
+                }
+                // Emit AoE pulse if upgrade is active and cooldown is ready
+                if (this.hasAoePulse && currentTime - this.lastAoePulseTime > this.aoePulseCooldown) {
+                    this.emitAoePulse();
+                    this.lastAoePulseTime = currentTime;
+                }
+
+                gameState.xpGems.forEach(gem => {
+                    const dist = Math.hypot(this.x - gem.x, this.y - gem.y);
+                    if (dist < this.magnetRadius) {
+                        const angle = Math.atan2(this.y - gem.y, this.x - gem.x);
+                        gem.x += Math.cos(angle) * 8;
+                        gem.y += Math.sin(angle) * 8;
+                    }
+                });
+            }
+
+            shoot() {
+                let targetEnemy = null;
+                // Auto-aim is always on now
+                if (gameState.enemies.length > 0 || gameState.boss) {
+                    let minDistance = Infinity;
+                    let potentialTargets = [...gameState.enemies];
+                    if (gameState.boss) {
+                        potentialTargets.push(gameState.boss);
+                    }
+
+                    for (const entity of potentialTargets) {
+                        const dist = Math.hypot(this.x - entity.x, this.y - entity.y);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            targetEnemy = entity;
+                        }
+                    }
+                }
+
+                const targetX = targetEnemy ? targetEnemy.x : mousePos.x;
+                const targetY = targetEnemy ? targetEnemy.y : mousePos.y;
+
+                const baseAngle = Math.atan2(targetY - this.y, targetX - this.x);
+
+                const angles = [
+                    baseAngle,          // Forward
+                    baseAngle + Math.PI / 2,    // Right
+                    baseAngle + Math.PI,        // Backward
+                    baseAngle - Math.PI / 2     // Left
+                ];
+
+                // Add diagonal shots if the upgrade is active
+                if (this.hasDiagonalShot) {
+                    angles.push(baseAngle + Math.PI / 4);   // Forward-Right
+                    angles.push(baseAngle + 3 * Math.PI / 4); // Backward-Right
+                    angles.push(baseAngle - Math.PI / 4);   // Forward-Left
+                    angles.push(baseAngle - 3 * Math.PI / 4); // Backward-Left
+                }
+
+                // Calculate projectile radius based on player's current damage
+                const projectileRadius = PROJECTILE_BASE_RADIUS + (this.damage / 8); 
+
+                angles.forEach(angle => {
+                    gameState.projectiles.push(new Projectile(this.x, this.y, angle, this.damage, this.projectileSpeed, projectileRadius, 'normal'));
+                });
+                
+                playShootSound();
+            }
+
+            shootPowerMissile() {
+                let targetEnemy = null;
+                if (gameState.enemies.length > 0 || gameState.boss) {
+                    let minDistance = Infinity;
+                    let potentialTargets = [...gameState.enemies];
+                    if (gameState.boss) {
+                        potentialTargets.push(gameState.boss);
+                    }
+
+                    for (const entity of potentialTargets) {
+                        const dist = Math.hypot(this.x - entity.x, this.y - entity.y);
+                        if (dist < minDistance) {
+                            minDistance = dist;
+                            targetEnemy = entity;
+                        }
+                    }
+                }
+
+                const targetX = targetEnemy ? targetEnemy.x : mousePos.x;
+                const targetY = targetEnemy ? targetEnemy.y : mousePos.y;
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+
+                // Powerful missile has higher damage and a larger base radius
+                const powerMissileDamage = this.damage * 3; // Example: 3x normal damage
+                const powerMissileRadius = PROJECTILE_BASE_RADIUS * 2 + (powerMissileDamage / 10); // Larger and scales with damage
+                gameState.projectiles.push(new Projectile(this.x, this.y, angle, powerMissileDamage, PROJECTILE_SPEED * 1.2, powerMissileRadius, 'power'));
+                playShootSound(); // Use the same shoot sound for now
+            }
+
+            emitAoePulse() {
+                // Visual effect for the pulse
+                gameState.pulseEffects.push({
+                    x: this.x,
+                    y: this.y,
+                    radius: 0,
+                    maxRadius: this.aoePulseRadius,
+                    alpha: 1,
+                    color: 'rgba(128, 0, 128, 0.8)', // Purple
+                    lifespan: 30 // frames
+                });
+                
+                const deadEnemies = [];
+                // Create a copy of the enemies array to iterate safely, as elements might be removed
+                const enemiesToCheck = [...gameState.enemies]; 
+                
+                enemiesToCheck.forEach((enemy) => {
+                    const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+                    if (dist < this.aoePulseRadius) {
+                        if (enemy.takeDamage(this.aoePulseDamage)) {
+                            deadEnemies.push(enemy); // Mark for removal
+                        }
+                    }
+                });
+
+                // Filter out dead enemies from the main enemies array
+                gameState.enemies = gameState.enemies.filter(enemy => !deadEnemies.includes(enemy));
+
+                // Handle XP and kill count for regular enemies that died
+                deadEnemies.forEach(enemy => {
+                    gameState.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpValue));
+                    gameState.killCount++;
+                });
+
+                // Handle boss separately as it's not in the enemies array
+                if (gameState.boss) {
+                    const distToBoss = Math.hypot(this.x - gameState.boss.x, this.y - gameState.boss.y);
+                    if (distToBoss < this.aoePulseRadius) {
+                        if (gameState.boss.takeDamage(this.aoePulseDamage)) {
+                            gameState.xpGems.push(new XPGem(gameState.boss.x, gameState.boss.y, gameState.boss.xpValue));
+                            gameState.boss = null;
+                            gameState.isBossActive = false;
+                            gameState.killCount++;
+                            gameOver(); // End game after boss defeat
+                        }
+                    }
+                }
+                playHitSound(); // Use hit sound for AoE too
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+                this.hitTimer = 10; // frames of flash
+                screenShake.intensity = 5;
+                screenShake.duration = 15; // frames
+                if (this.hp <= 0) {
+                    this.hp = 0;
+                    gameOver();
+                }
+                updateUI();
+            }
+
+            addXp(amount) {
+                this.xp += amount;
+                if (this.xp >= this.xpToNextLevel) {
+                    this.levelUp();
+                }
+                updateUI();
+            }
+
+            levelUp() {
+                this.level++;
+                this.xp -= this.xpToNextLevel;
+                this.xpToNextLevel = Math.floor(XP_PER_LEVEL_BASE * Math.pow(1.2, this.level - 1));
+                playLevelUpSound();
+                showLevelUpModal();
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, angle, damage, speed, radius, type = 'normal') {
+                this.x = x; this.y = y;
+                this.radius = radius;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.damage = damage;
+                this.type = type;
+                this.hitEnemies = new Set();
+                this.trail = [];
+                this.rotation = angle;
+                this.pulsePhase = Math.random() * Math.PI * 2;
+            }
+            
+            draw() {
+                ctx.save();
+                
+                // Draw trail
+                if (this.trail.length > 1) {
+                    ctx.globalAlpha = 0.6;
+                    ctx.strokeStyle = this.type === 'power' ? '#8b5cf6' : '#fbbf24';
+                    ctx.lineWidth = this.radius;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(this.trail[0].x, this.trail[0].y);
+                    for (let i = 1; i < this.trail.length; i++) {
+                        ctx.lineTo(this.trail[i].x, this.trail[i].y);
+                    }
+                    ctx.stroke();
+                }
+                
+                ctx.globalAlpha = 1;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                let color, shadowColor, shadowBlur;
+                
+                if (this.type === 'power') {
+                    color = '#8b5cf6';
+                    shadowColor = '#a78bfa';
+                    shadowBlur = 25 + Math.sin(this.pulsePhase) * 5;
+                    
+                    // Power missile has special effects
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.3, '#a78bfa');
+                    gradient.addColorStop(1, '#6366f1');
+                    color = gradient;
+                } else {
+                    color = '#fbbf24';
+                    shadowColor = '#fcd34d';
+                    shadowBlur = 15 + Math.sin(this.pulsePhase) * 3;
+                    
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+                    gradient.addColorStop(0, '#ffffff');
+                    gradient.addColorStop(0.4, '#fbbf24');
+                    gradient.addColorStop(1, '#f59e0b');
+                    color = gradient;
+                }
+
+                ctx.shadowColor = shadowColor;
+                ctx.shadowBlur = shadowBlur;
+                
+                // Draw projectile body
+                ctx.beginPath();
+                if (this.type === 'power') {
+                    // Missile shape for power projectiles
+                    ctx.moveTo(this.radius, 0);
+                    ctx.lineTo(-this.radius * 0.5, -this.radius * 0.5);
+                    ctx.lineTo(-this.radius * 0.3, 0);
+                    ctx.lineTo(-this.radius * 0.5, this.radius * 0.5);
+                    ctx.closePath();
+                } else {
+                    // Circular for normal projectiles
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                }
+                
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                // Additional glow for power missiles
+                if (this.type === 'power') {
+                    ctx.globalAlpha = 0.5;
+                    ctx.shadowBlur = shadowBlur * 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * 1.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#8b5cf6';
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+            
+            update() {
+                // Store previous position for trail
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > 8) {
+                    this.trail.shift();
+                }
+                
+                this.x += this.vx;
+                this.y += this.vy;
+                this.pulsePhase += 0.3;
+                
+                // Add particle effects while moving
+                if (Math.random() < 0.3) {
+                    particles.push(new Particle(
+                        this.x + (Math.random() - 0.5) * this.radius,
+                        this.y + (Math.random() - 0.5) * this.radius,
+                        this.type === 'power' ? '#8b5cf6' : '#fbbf24',
+                        2,
+                        1,
+                        20,
+                        'glow'
+                    ));
+                }
+            }
+        }
+
+        class Enemy {
+            constructor(x, y, radius, hp, speed, xpValue) {
+                this.x = x; this.y = y; this.radius = radius;
+                this.hp = hp; this.maxHp = hp;
+                this.speed = speed; this.xpValue = xpValue;
+                this.damage = 5;
+                this.animationPhase = Math.random() * Math.PI * 2;
+                this.pulseIntensity = 0;
+                this.deathAnimation = 0;
+            }
+            
+            draw() {
+                if (this.deathAnimation > 0) {
+                    // Death animation
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.scale(this.deathAnimation, this.deathAnimation);
+                    ctx.globalAlpha = this.deathAnimation;
+                    
+                    ctx.shadowColor = '#ef4444';
+                    ctx.shadowBlur = 30;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius * 2, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.fill();
+                    
+                    ctx.restore();
+                    return;
+                }
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Animate the enemy
+                this.animationPhase += 0.1;
+                const breathe = Math.sin(this.animationPhase) * 0.1 + 1;
+                ctx.scale(breathe, breathe);
+
+                // Enhanced shadow and glow
+                ctx.shadowColor = '#dc2626';
+                ctx.shadowBlur = 15 + this.pulseIntensity;
+
+                // Main blob body with gradient
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.radius);
+                gradient.addColorStop(0, '#fca5a5');
+                gradient.addColorStop(0.5, '#ef4444');
+                gradient.addColorStop(1, '#b91c1c');
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                ctx.strokeStyle = '#991b1b';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Animated spikes/tentacles
+                const numSpikes = 6;
+                const time = Date.now() * 0.005;
+                
+                for (let i = 0; i < numSpikes; i++) {
+                    const angle = (i / numSpikes) * Math.PI * 2 + time;
+                    const spikeLength = this.radius * (1.3 + Math.sin(time + i) * 0.2);
+                    const spikeWidth = this.radius * 0.25;
+
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
+                    ctx.lineTo(
+                        Math.cos(angle - 0.3) * (this.radius + spikeWidth / 2), 
+                        Math.sin(angle - 0.3) * (this.radius + spikeWidth / 2)
+                    );
+                    ctx.lineTo(Math.cos(angle) * spikeLength, Math.sin(angle) * spikeLength);
+                    ctx.lineTo(
+                        Math.cos(angle + 0.3) * (this.radius + spikeWidth / 2), 
+                        Math.sin(angle + 0.3) * (this.radius + spikeWidth / 2)
+                    );
+                    ctx.closePath();
+                    
+                    const spikeGradient = ctx.createLinearGradient(
+                        Math.cos(angle) * this.radius, Math.sin(angle) * this.radius,
+                        Math.cos(angle) * spikeLength, Math.sin(angle) * spikeLength
+                    );
+                    spikeGradient.addColorStop(0, '#dc2626');
+                    spikeGradient.addColorStop(1, '#7f1d1d');
+                    
+                    ctx.fillStyle = spikeGradient;
+                    ctx.fill();
+                }
+
+                // Animated central eye
+                const eyeScale = 0.8 + Math.sin(this.animationPhase * 2) * 0.2;
+                ctx.scale(eyeScale, eyeScale);
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius * 0.4, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                // Pupil that follows player
+                const playerAngle = Math.atan2(gameState.player.y - this.y, gameState.player.x - this.x);
+                const pupilOffset = this.radius * 0.1;
+                const pupilX = Math.cos(playerAngle) * pupilOffset;
+                const pupilY = Math.sin(playerAngle) * pupilOffset;
+                
+                ctx.beginPath();
+                ctx.arc(pupilX, pupilY, this.radius * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+
+                ctx.restore();
+                
+                // HP bar
+                const barWidth = this.radius * 1.5;
+                const barHeight = 4;
+                const barX = this.x - barWidth / 2;
+                const barY = this.y - this.radius - 10;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                ctx.fillStyle = '#65a30d'; // lime-600
+                ctx.fillRect(barX, barY, barWidth * (this.hp / this.maxHp), barHeight);
+            }
+            update() {
+                const angle = Math.atan2(gameState.player.y - this.y, gameState.player.x - this.x);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+            }
+            takeDamage(amount) {
+                this.hp -= amount;
+                createExplosion(this.x, this.y, 'rgba(255, 255, 255, 0.7)', 5);
+                if (this.hp <= 0) {
+                    playHitSound();
+                    createExplosion(this.x, this.y, 'rgb(239, 68, 68)', 30);
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // New Boss Class
+        class Boss {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.radius = BOSS_RADIUS;
+                this.hp = BOSS_HP; this.maxHp = BOSS_HP;
+                this.speed = BOSS_SPEED;
+                this.damage = BOSS_DAMAGE;
+                this.xpValue = 500; // Large XP value for boss
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Main body (large, ominous blob)
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgb(139, 92, 246)'; // Purple/dark red
+                ctx.shadowColor = 'rgb(167, 139, 250)'; // Purple glow
+                ctx.shadowBlur = 25;
+                ctx.fill();
+                ctx.strokeStyle = 'rgb(99, 102, 241)'; // Darker purple
+                ctx.lineWidth = 5;
+                ctx.stroke();
+
+                // Multiple eyes
+                const eyeRadius = this.radius * 0.15;
+                const eyeOffset = this.radius * 0.4;
+                const pupilRadius = eyeRadius * 0.5;
+
+                // Top-left eye
+                ctx.beginPath();
+                ctx.arc(-eyeOffset, -eyeOffset, eyeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(-eyeOffset, -eyeOffset, pupilRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+
+                // Top-right eye
+                ctx.beginPath();
+                ctx.arc(eyeOffset, -eyeOffset, eyeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(eyeOffset, -eyeOffset, pupilRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+
+                // Bottom eye
+                ctx.beginPath();
+                ctx.arc(0, eyeOffset, eyeRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(0, eyeOffset, pupilRadius, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+
+                // Mouth (jagged line)
+                ctx.beginPath();
+                ctx.moveTo(-this.radius * 0.5, this.radius * 0.7);
+                ctx.lineTo(0, this.radius * 0.85);
+                ctx.lineTo(this.radius * 0.5, this.radius * 0.7);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.restore();
+
+                // HP bar (above the boss)
+                const barWidth = this.radius * 2;
+                const barHeight = 8;
+                const barX = this.x - barWidth / 2;
+                const barY = this.y - this.radius - 20;
+                ctx.fillStyle = '#333';
+                ctx.fillRect(barX, barY, barWidth, barHeight);
+                ctx.fillStyle = '#ef4444'; // Red for boss HP
+                ctx.fillRect(barX, barY, barWidth * (this.hp / this.maxHp), barHeight);
+            }
+
+            update() {
+                // Boss moves towards the player
+                const angle = Math.atan2(gameState.player.y - this.y, gameState.player.x - this.x);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+                createExplosion(this.x, this.y, 'rgba(255, 255, 255, 0.7)', 10); // Larger explosions for boss hits
+                if (this.hp <= 0) {
+                    playHitSound(); // Use hit sound for boss too
+                    createExplosion(this.x, this.y, 'rgb(139, 92, 246)', 100); // Massive explosion on boss defeat
+                    return true; // Boss is defeated
+                }
+                return false; // Boss is still alive
+            }
+        }
+
+        class XPGem {
+            constructor(x, y, value) {
+                this.x = x; this.y = y;
+                this.radius = XP_GEM_SIZE / 2;
+                this.value = value;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.shadowColor = 'rgb(147, 197, 253)';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.moveTo(0, -this.radius * 1.5);
+                ctx.lineTo(this.radius, 0);
+                ctx.lineTo(0, this.radius * 1.5);
+                ctx.lineTo(-this.radius, 0);
+                ctx.closePath();
+                ctx.fillStyle = 'rgb(96, 165, 250)';
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        // --- Game Logic ---
+        function createExplosion(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color, 4, 3, 60));
+            }
+        }
+
+        /**
+         * Initializes the game state, canvas size, and shows the start modal.
+         * This function now performs a complete reset of player stats and upgrades.
+         */
+        function initializeGame() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Create a brand new player instance, completely resetting all stats and upgrades
+            gameState.player = new Player(canvas.width / 2, canvas.height / 2);
+            
+            gameState.enemies = [];
+            gameState.projectiles = [];
+            gameState.xpGems = [];
+            particles = [];
+            gameState.gameTime = 0;
+            gameState.killCount = 0;
+            isPaused = true;
+            gameState.lastEnemySpawnTime = 0;
+            gameState.isBossActive = false;
+            gameState.boss = null;
+            hasRevived = false;
+            gameState.pulseEffects = []; // Clear pulse effects on new game
+            isGameOverSoundPlayed = false; // Reset the flag for game over sound
+
+            initBackgroundParticles(); // Initialize background particles
+            updateUI();
+            hideAllModals();
+            startModal.classList.remove('hidden');
+            startModal.classList.add('flex');
+        }
+
+        /**
+         * Starts the game, unpauses it, hides the start modal, and begins the game loop.
+         */
+        function startGame() {
+            Tone.start(); // Initialize Tone.js audio context
+            isPaused = false;
+            startModal.classList.add('hidden');
+            startModal.classList.remove('flex');
+            lastTimestamp = performance.now();
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Ends the game, pauses the loop, plays game over sound, and displays the game over or score submission modal.
+         */
+        function gameOver() {
+            isPaused = true;
+            cancelAnimationFrame(gameLoopId);
+            playGameOverSound();
+            finalTimeEl.textContent = formatTime(gameState.gameTime);
+            finalKillsEl.textContent = gameState.killCount;
+
+            // Show revive modal if player hasn't revived yet
+            if (!hasRevived) {
+                showReviveModal();
+            } else {
+                // If already revived, go straight to score submission
+                showScoreSubmitModal();
+            }
+        }
+
+        /**
+         * Revives the player after watching an ad.
+         */
+        function reviveGame() {
+            hideAllModals();
+            gameState.player.hp = gameState.player.maxHp; // Restore full HP
+            gameState.enemies = []; // Clear all enemies on screen
+            gameState.projectiles = []; // Clear all projectiles
+            particles = []; // Clear all particles
+            gameState.pulseEffects = []; // Clear pulse effects
+            hasRevived = true; // Mark as revived
+            isPaused = false; // Resume game
+            lastTimestamp = performance.now(); // Reset timestamp for smooth continuation
+            gameLoopId = requestAnimationFrame(gameLoop);
+            console.log("Player revived!");
+        }
+
+        /**
+         * Restarts the game by re-initializing the game state and starting a new game.
+         * This now performs a full reset.
+         */
+        function restartGame() {
+            initializeGame(); // Re-initializes everything including player stats and all upgrades
+            startGame();
+        }
+
+        /**
+         * The main game loop, updates game state and draws elements.
+         * @param {DOMHighResTimeStamp} timestamp - The current time provided by requestAnimationFrame.
+         */
+        function gameLoop(timestamp) {
+            if (isPaused) {
+                gameLoopId = requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            updateGame(deltaTime);
+            drawGame();
+
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Updates all game elements' positions, handles collisions, and manages spawning.
+         * @param {number} deltaTime - Time elapsed since the last frame in milliseconds.
+         */
+        function updateGame(deltaTime) {
+            gameState.gameTime += deltaTime;
+            updateUI();
+
+            // Boss appearance logic
+            if (gameState.gameTime >= BOSS_APPEAR_TIME && !gameState.isBossActive && !gameState.boss) {
+                gameState.isBossActive = true;
+                // Spawn boss at a random edge
+                const side = Math.floor(Math.random() * 4); // 0:top, 1:right, 2:bottom, 3:left
+                let x, y;
+                switch (side) {
+                    case 0: x = Math.random() * canvas.width; y = -BOSS_RADIUS; break; // Top
+                    case 1: x = canvas.width + BOSS_RADIUS; y = Math.random() * canvas.height; break; // Right
+                    case 2: x = Math.random() * canvas.width; y = canvas.height + BOSS_RADIUS; break; // Bottom
+                    case 3: x = -BOSS_RADIUS; y = Math.random() * canvas.height; break; // Left
+                }
+                gameState.boss = new Boss(x, y);
+                gameState.enemies = []; // Clear regular enemies when boss appears
+                console.log("Boss spawned!");
+            }
+
+            // Spawn enemies at regular intervals ONLY if boss is not active
+            if (!gameState.isBossActive && Date.now() - gameState.lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL) {
+                spawnEnemy();
+                gameState.lastEnemySpawnTime = Date.now();
+            }
+
+            gameState.player.update(deltaTime);
+            // Update and clean up particles
+            particles.forEach((p, i) => { p.update(); if (p.lifespan <= 0) particles.splice(i, 1); });
+            // Update and clean up projectiles that go off-screen
+            gameState.projectiles.forEach((p, i) => { 
+                p.update(); 
+                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
+                    // Only remove normal projectiles when off-screen. Power projectiles might need to persist longer.
+                    if (p.type === 'normal') {
+                        gameState.projectiles.splice(i, 1); 
+                    }
+                }
+            });
+            
+            // Update enemies and handle collisions with player and projectiles
+            gameState.enemies.forEach((enemy, enemyIndex) => {
+                enemy.update();
+                // Collision with player
+                if (Math.hypot(gameState.player.x - enemy.x, gameState.player.y - enemy.y) < gameState.player.radius + enemy.radius) {
+                    gameState.player.takeDamage(enemy.damage);
+                    gameState.enemies.splice(enemyIndex, 1); // Remove enemy after collision
+                    playHitSound();
+                }
+                // Collision with projectiles
+                gameState.projectiles.forEach((p, projIndex) => {
+                    const dist = Math.hypot(p.x - enemy.x, p.y - enemy.y);
+                    if (dist < p.radius + enemy.radius) {
+                        // Check if this projectile has already hit this enemy (for piercing)
+                        if (!p.hitEnemies.has(enemy)) {
+                            if (enemy.takeDamage(p.damage)) { // Enemy takes damage, returns true if dead
+                                gameState.xpGems.push(new XPGem(enemy.x, enemy.y, enemy.xpValue)); // Drop XP gem
+                                gameState.enemies.splice(enemyIndex, 1); // Remove dead enemy
+                                gameState.killCount++; // Increment kill count
+                            }
+                            p.hitEnemies.add(enemy); // Mark enemy as hit by this projectile
+
+                            // If it's a normal projectile, remove it after hit
+                            if (p.type === 'normal') {
+                                gameState.projectiles.splice(projIndex, 1); 
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Update boss and handle collisions if active
+            if (gameState.boss) {
+                gameState.boss.update();
+                // Collision with player
+                if (Math.hypot(gameState.player.x - gameState.boss.x, gameState.player.y - gameState.boss.y) < gameState.player.radius + gameState.boss.radius) {
+                    gameState.player.takeDamage(gameState.boss.damage);
+                    // Boss does not get removed on collision with player, it's a persistent threat
+                    playHitSound();
+                }
+                // Collision with projectiles (specifically for boss)
+                gameState.projectiles.forEach((p, projIndex) => {
+                    const dist = Math.hypot(p.x - gameState.boss.x, p.y - gameState.boss.y);
+                    if (dist < p.radius + gameState.boss.radius) {
+                        if (!p.hitEnemies.has(gameState.boss)) { // Check if boss already hit by this piercing projectile
+                            if (gameState.boss.takeDamage(p.damage)) { // Boss takes damage, returns true if defeated
+                                gameState.xpGems.push(new XPGem(gameState.boss.x, gameState.boss.y, gameState.boss.xpValue));
+                                gameState.boss = null;
+                                gameState.isBossActive = false;
+                                gameState.killCount++;
+                                gameOver(); // End game after boss defeat
+                            }
+                            p.hitEnemies.add(gameState.boss); // Mark boss as hit by this projectile
+
+                            // If it's a normal projectile, remove it after hit
+                            if (p.type === 'normal') {
+                                gameState.projectiles.splice(projIndex, 1); 
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Handle XP gem collection by player
+            gameState.xpGems.forEach((gem, index) => {
+                if (Math.hypot(gameState.player.x - gem.x, gameState.player.y - gem.y) < gameState.player.radius + gem.radius) {
+                    gameState.player.addXp(gem.value);
+                    gameState.xpGems.splice(index, 1); // Remove collected gem
+                    playCollectXPSound();
+                }
+            });
+
+            // Update and clean up pulse effects
+            gameState.pulseEffects.forEach((pulse, index) => {
+                pulse.radius += (pulse.maxRadius / pulse.lifespan); // Expand
+                pulse.alpha -= (1 / pulse.lifespan); // Fade
+                if (pulse.alpha <= 0) {
+                    gameState.pulseEffects.splice(index, 1);
+                }
+            });
+
+            updateBackgroundParticles(); // Update background particles
+        }
+
+        /**
+         * Draws all game elements on the canvas, applying screen shake if active.
+         */
+        function drawGame() {
+            ctx.save();
+            // Apply screen shake offset
+            if (screenShake.duration > 0) {
+                screenShake.x = (Math.random() - 0.5) * screenShake.intensity;
+                screenShake.y = (Math.random() - 0.5) * screenShake.intensity;
+                ctx.translate(screenShake.x, screenShake.y);
+                screenShake.duration--;
+            }
+            
+            // Clear canvas, accounting for potential screen shake offset
+            ctx.clearRect(-screenShake.intensity, -screenShake.intensity, canvas.width + screenShake.intensity * 2, canvas.height + screenShake.intensity * 2);
+
+            drawBackgroundParticles(); // Draw background particles
+
+            // Draw all game objects
+            particles.forEach(p => p.draw());
+            gameState.xpGems.forEach(gem => gem.draw());
+            gameState.projectiles.forEach(p => p.draw());
+            gameState.enemies.forEach(enemy => enemy.draw());
+            if (gameState.boss) { // Draw boss if active
+                gameState.boss.draw();
+            }
+            gameState.player.draw();
+
+            // Draw pulse effects
+            gameState.pulseEffects.forEach(pulse => {
+                ctx.save();
+                ctx.globalAlpha = pulse.alpha;
+                ctx.beginPath();
+                ctx.arc(pulse.x, pulse.y, pulse.radius, 0, Math.PI * 2);
+                ctx.strokeStyle = pulse.color;
+                ctx.lineWidth = 5; // Keep this for the main ring
+                ctx.shadowColor = pulse.color;
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+
+                // Add a fading inner glow/fill for more visual impact
+                ctx.globalAlpha = pulse.alpha * 0.3; // Make it semi-transparent
+                ctx.fillStyle = pulse.color;
+                ctx.beginPath();
+                ctx.arc(pulse.x, pulse.y, pulse.radius * 0.8, 0, Math.PI * 2); // Slightly smaller filled circle
+                ctx.fill();
+
+                ctx.restore();
+            });
+            
+            // Custom Cursor (crosshair)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(mousePos.x - 10, mousePos.y); ctx.lineTo(mousePos.x + 10, mousePos.y);
+            ctx.moveTo(mousePos.x, mousePos.y - 10); ctx.lineTo(mousePos.x, mousePos.y + 10);
+            ctx.stroke();
+
+            ctx.restore(); // Restore canvas transformation
+        }
+
+        /**
+         * Spawns a new enemy at a random edge of the canvas.
+         * Enemy HP and speed scale gradually with game time.
+         */
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4); // 0:top, 1:right, 2:bottom, 3:left
+            let x, y;
+            const radius = 15 + Math.random() * 10; // Random size
+
+            // Cap speed scaling at MAX_ENEMY_SPEED_LEVEL (level 5)
+            const effectiveLevelForSpeed = Math.min(gameState.player.level, MAX_ENEMY_SPEED_LEVEL);
+            const speed = ENEMY_SPEED_BASE + ((effectiveLevelForSpeed - 1) * ENEMY_SPEED_SCALING_PER_LEVEL);
+            
+            // Cap HP scaling at MAX_ENEMY_HP_LEVEL (level 8)
+            const effectiveLevelForHP = Math.min(gameState.player.level, MAX_ENEMY_HP_LEVEL);
+            // If ENEMY_HP_SCALING_PER_LEVEL is 0, hp will always be ENEMY_HP_BASE (1)
+            const hp = ENEMY_HP_BASE + ((effectiveLevelForHP - 1) * ENEMY_HP_SCALING_PER_LEVEL);
+            const xpValue = Math.floor(hp / 2) || 1; // XP value based on HP, minimum 1 XP
+
+            // Determine spawn position based on side
+            switch (side) {
+                case 0: x = Math.random() * canvas.width; y = -radius; break; // Top
+                case 1: x = canvas.width + radius; y = Math.random() * canvas.height; break; // Right
+                case 2: x = Math.random() * canvas.width; y = canvas.height + radius; break; // Bottom
+                case 3: x = -radius; y = Math.random() * canvas.height; break; // Left
+            }
+
+            let enemiesToSpawn = 3; // Base enemies to spawn
+            // Increase enemy count after MAX_ENEMY_HP_LEVEL (level 8)
+            const levelOverHPMax = Math.max(0, gameState.player.level - MAX_ENEMY_HP_LEVEL);
+            enemiesToSpawn = Math.ceil(enemiesToSpawn * Math.pow(1 + ENEMY_COUNT_INCREASE_PER_LEVEL, levelOverHPMax));
+            
+            for (let i = 0; i < enemiesToSpawn; i++) {
+                // Spawn enemies with slight random offset to prevent perfect stacking
+                const spawnX = x + (Math.random() - 0.5) * 50;
+                const spawnY = y + (Math.random() - 0.5) * 50;
+                gameState.enemies.push(new Enemy(spawnX, spawnY, radius, hp, speed, xpValue));
+            }
+            // Debugging log to verify values
+            console.log(`Spawned enemy at Player Level ${gameState.player.level}: Calculated Speed = ${speed.toFixed(2)}, Calculated HP = ${hp.toFixed(2)}, Enemies to Spawn = ${enemiesToSpawn}`);
+        }
+
+        /**
+         * Updates the game UI elements (HP, XP, Level, Time, Kills).
+         */
+        function updateUI() {
+            if (!gameState.player) return;
+            hpBar.style.width = `${(gameState.player.hp / gameState.player.maxHp) * 100}%`;
+            xpBar.style.width = `${(gameState.player.xp / gameState.player.xpToNextLevel) * 100}%`;
+            levelEl.textContent = gameState.player.level;
+            timerEl.textContent = formatTime(gameState.gameTime);
+            killCountEl.textContent = gameState.killCount;
+        }
+
+        /**
+         * Formats milliseconds into a MM:SS string.
+         * @param {number} ms - Time in milliseconds.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(ms) {
+            const s = Math.floor(ms / 1000);
+            return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        /**
+         * Displays the level-up modal with three random upgrade options.
+         */
+        function showLevelUpModal() {
+            isPaused = true; // Pause game during level up
+            upgradeOptionsContainer.innerHTML = ''; // Clear previous options
+
+            // Filter out 'once' upgrades that have already been selected
+            const availableUpgradeKeys = Object.keys(gameState.upgrades).filter(key => {
+                const upgrade = gameState.upgrades[key];
+                // For autoAim, it's now default, so it's not an upgrade option.
+                // For powerMissile, it's a 'once' upgrade, so it should only appear if not already taken.
+                // For aoePulse, it's a 'once' upgrade, so it should only appear if not already taken.
+                return !(upgrade.once && gameState.player[key]);
+            });
+
+            const selectedUpgrades = [];
+            // Select up to 3 unique available upgrades
+            while (selectedUpgrades.length < 3 && availableUpgradeKeys.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableUpgradeKeys.length);
+                const upgradeKey = availableUpgradeKeys.splice(randomIndex, 1)[0]; // Remove selected to prevent duplicates
+                selectedUpgrades.push({ key: upgradeKey, ...gameState.upgrades[upgradeKey] });
+            }
+
+            // Create and append upgrade cards to the modal
+            selectedUpgrades.forEach(upgrade => {
+                const card = document.createElement('div');
+                card.className = 'upgrade-card bg-stone-700 p-6 rounded-lg shadow-xl text-center cursor-pointer hover:bg-stone-600 w-64 border-2 border-stone-600 hover:border-amber-400';
+                card.innerHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-2">${upgrade.name}</h3><p class="text-gray-300">${upgrade.description}</p>`;
+                card.onclick = () => selectUpgrade(upgrade);
+                upgradeOptionsContainer.appendChild(card);
+            });
+
+            levelUpModal.classList.remove('hidden');
+            levelUpModal.classList.add('flex');
+        }
+
+        /**
+         * Applies the chosen upgrade and resumes the game.
+         * @param {object} upgrade - The selected upgrade object.
+         */
+        function selectUpgrade(upgrade) {
+            upgrade.apply(); // Apply the upgrade effect
+            if (upgrade.once) {
+                gameState.player[upgrade.key] = true; // Mark 'once' upgrades as taken
+            }
+            hideAllModals(); // Hide level-up modal
+            isPaused = false; // Resume game
+            lastTimestamp = performance.now(); // Reset timestamp for smooth continuation
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Hides all game modals.
+         */
+        function hideAllModals() {
+            // Check if elements exist before trying to access their classList
+            if (startModal) { startModal.classList.add('hidden'); startModal.classList.remove('flex'); }
+            if (levelUpModal) { levelUpModal.classList.add('hidden'); levelUpModal.classList.remove('flex'); }
+            if (gameOverModal) { gameOverModal.classList.add('hidden'); gameOverModal.classList.remove('flex'); }
+            if (scoreSubmitModal) { scoreSubmitModal.classList.add('hidden'); scoreSubmitModal.classList.remove('flex'); }
+            if (rankingModal) { rankingModal.classList.add('hidden'); rankingModal.classList.remove('flex'); }
+            if (reviveModal) { reviveModal.classList.add('hidden'); reviveModal.classList.remove('flex'); }
+        }
+
+        /**
+         * Displays the revive modal.
+         */
+        function showReviveModal() {
+            hideAllModals();
+            reviveModal.classList.remove('hidden');
+            reviveModal.classList.add('flex');
+            watchAdButton.disabled = false; // Enable button
+            adTimerEl.classList.add('hidden'); // Hide ad timer initially
+        }
+
+        /**
+         * Simulates watching an ad and then revives the player.
+         */
+        function watchAdAndRevive() {
+            watchAdButton.disabled = true; // Disable button during ad
+            endGameButton.disabled = true; // Disable end game button
+            adTimerEl.classList.remove('hidden'); // Show ad timer
+
+            let countdown = 3;
+            adCountdownEl.textContent = countdown;
+
+            const adInterval = setInterval(() => {
+                countdown--;
+                adCountdownEl.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(adInterval);
+                    adTimerEl.classList.add('hidden'); // Hide ad timer
+                    reviveGame(); // Call revive function
+                }
+            }, 1000);
+        }
+
+        /**
+         * Displays the score submission modal.
+         */
+        function showScoreSubmitModal() {
+            playerNameInput.value = ''; // Clear previous input
+            playerNameInput.placeholder = "최대 10자"; // Reset placeholder
+            playerNameInput.classList.remove('border-red-500'); // Remove error styling
+            scoreSubmitModal.classList.remove('hidden');
+            scoreSubmitModal.classList.add('flex');
+        }
+
+        /**
+         * Submits the player's score to Firestore if a name is provided.
+         * Then displays the rankings.
+         */
+        async function submitScore() {
+            const playerName = playerNameInput.value.trim();
+            if (!playerName) {
+                // Provide visual feedback for empty name
+                playerNameInput.placeholder = "이름을 입력해주세요!";
+                playerNameInput.classList.add('border-red-500');
+                setTimeout(() => {
+                    playerNameInput.placeholder = "최대 10자";
+                    playerNameInput.classList.remove('border-red-500');
+                }, 2000);
+                return;
+            }
+
+            hideAllModals(); // Hide submit modal
+
+            try {
+                // Add score to the public rankings collection
+                const rankingsCollection = collection(db, `artifacts/${appId}/public/data/rankings`);
+                await addDoc(rankingsCollection, {
+                    userId: userId, // Store user ID
+                    userName: playerName,
+                    time: Math.floor(gameState.gameTime / 1000), // Store time in seconds
+                    kills: gameState.killCount,
+                    timestamp: Date.now() // Record submission time
+                });
+                console.log("Score submitted successfully!");
+                await displayRankings(); // Show rankings after successful submission
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                // If submission fails, show the regular game over modal
+                gameOverModal.classList.remove('hidden');
+                gameOverModal.classList.add('flex');
+            }
+        }
+
+        /**
+         * Fetches and displays the top 10 rankings from Firestore.
+         * Sorts data in memory as per instructions.
+         */
+        async function displayRankings() {
+            rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4">랭킹 불러오는 중...</td></tr>';
+            rankingModal.classList.remove('hidden');
+            rankingModal.classList.add('flex');
+
+            try {
+                const rankingsCollection = collection(db, `artifacts/${appId}/public/data/rankings`);
+                // Fetch all documents from the collection (or a large subset if performance is an issue for many docs)
+                const querySnapshot = await getDocs(rankingsCollection);
+
+                let allScores = [];
+                querySnapshot.forEach((doc) => {
+                    allScores.push(doc.data());
+                });
+
+                // Sort scores in memory: primary sort by time (descending), secondary sort by kills (descending)
+                allScores.sort((a, b) => {
+                    if (b.time !== a.time) {
+                        return b.time - a.time;
+                    }
+                    return b.kills - a.kills;
+                });
+
+                // Take only the top 10 scores to display
+                const top10Scores = allScores.slice(0, 10);
+
+                rankingList.innerHTML = ''; // Clear loading message
+                if (top10Scores.length === 0) {
+                    rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">아직 랭킹이 없습니다.</td></tr>';
+                } else {
+                    let rank = 1;
+                    top10Scores.forEach((data) => {
+                        const row = `
+                            <tr class="border-b border-stone-700 last:border-b-0 hover:bg-stone-700">
+                                <td class="py-2 px-4">${rank++}</td>
+                                <td class="py-2 px-4">${data.userName}</td>
+                                <td class="py-2 px-4 text-right">${formatTime(data.time * 1000)}</td>
+                                <td class="py-2 px-4 text-right">${data.kills}</td>
+                            </tr>
+                        `;
+                        rankingList.innerHTML += row;
+                    });
+                }
+            } catch (e) {
+                console.error("Error fetching rankings: ", e);
+                rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-400">랭킹을 불러오는데 실패했습니다.</td></tr>';
+            }
+        }
+
+        // --- Event Listeners ---
+        // Handle window resize to adjust canvas dimensions
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            // Adjust player position if canvas shrinks
+            if(gameState.player) {
+                gameState.player.x = Math.min(gameState.player.x, canvas.width - gameState.player.radius);
+                gameState.player.y = Math.min(gameState.player.y, canvas.height - gameState.player.radius);
+            }
+        });
+
+        /**
+         * Updates mouse position based on pointer events.
+         * @param {MouseEvent|TouchEvent} e - The event object.
+         */
+        function handlePointerMove(e) {
+            // Get client coordinates, adjusting for canvas offset
+            mousePos.x = e.clientX - canvas.getBoundingClientRect().left;
+            mousePos.y = e.clientY - canvas.getBoundingClientRect().top;
+        }
+
+        // Mouse and touch move event listeners for player movement
+        canvas.addEventListener('mousemove', handlePointerMove);
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevent scrolling on touch devices
+            const touch = e.touches[0]; // Get the first touch point
+            handlePointerMove(touch);
+        }, { passive: false }); // Use passive: false to allow preventDefault
+
+        // Button click listeners
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', restartGame);
+        submitScoreButton.addEventListener('click', submitScore);
+        skipScoreButton.addEventListener('click', () => {
+            hideAllModals();
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('flex'); // Show game over modal if skipped
+        });
+        closeRankingButton.addEventListener('click', () => {
+            hideAllModals();
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('flex'); // Show game over modal after closing rankings
+        });
+        watchAdButton.addEventListener('click', watchAdAndRevive);
+        endGameButton.addEventListener('click', () => {
+            hideAllModals();
+            showScoreSubmitModal(); // Go to score submission if not reviving
+        });
+
+        // Initialize Firebase and then the game when the window loads
+        window.onload = async () => {
+            await initFirebase(); // Ensure Firebase is initialized before game starts
+            initializeGame();
+        };
+    </script>
+</body>
+</html>
