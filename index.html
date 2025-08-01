@@ -8,12 +8,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
     <!-- Tone.js for sound effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <!-- Kakao Adfit Script -->
+    <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
     <style>
+        /* Modified: Ensure html takes full height */
+        html {
+            height: 100%;
+        }
+
         body {
             font-family: 'Noto Sans KR', sans-serif;
             touch-action: none;
-            overflow: hidden;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            overflow-y: hidden; /* Modified: Prevent vertical scrolling */
             background: radial-gradient(ellipse at center, #1f2937 0%, #0c0a09 100%);
+            
+            /* Modified: Flexbox layout for vertical separation */
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Changed from min-height: 100vh to height: 100% */
+            padding: 0; /* Remove body padding, let flex items manage spacing */
+            align-items: center; /* Center content horizontally */
         }
         
         @keyframes pulse-bg {
@@ -53,6 +68,8 @@
             cursor: none;
             animation: pulse-bg 8s infinite ease-in-out;
             border: 2px solid rgba(251, 191, 36, 0.3);
+            width: 100%; /* Ensure canvas takes full width within flex container */
+            /* height: 100%; removed, flex-grow will handle height */
         }
         
         .upgrade-card {
@@ -77,17 +94,20 @@
             transition: opacity 0.3s ease;
         }
         
-        .upgrade-card:hover {
-            transform: translateY(-15px) scale(1.05);
-            box-shadow: 
-                0 20px 40px rgba(251, 191, 36, 0.3),
-                0 0 30px rgba(251, 191, 36, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-        
-        .upgrade-card:hover::before {
-            opacity: 1;
-            animation: neon-glow 1s ease-in-out infinite alternate;
+        /* Apply hover effects only on devices with a fine pointer (e.g., mouse) and hover capability */
+        @media (hover: hover) and (pointer: fine) {
+            .upgrade-card:hover {
+                transform: translateY(-15px) scale(1.05);
+                box-shadow: 
+                    0 20px 40px rgba(251, 191, 36, 0.3),
+                    0 0 30px rgba(251, 191, 36, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            }
+            
+            .upgrade-card:hover::before {
+                opacity: 1;
+                animation: neon-glow 1s ease-in-out infinite alternate;
+            }
         }
         
         .modal-button {
@@ -112,13 +132,16 @@
             transition: left 0.5s;
         }
         
-        .modal-button:hover {
-            background: linear-gradient(145deg, #facc15, #fbbf24);
-            box-shadow: 
-                0 12px 35px rgba(251, 191, 36, 0.6),
-                0 0 30px rgba(251, 191, 36, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            transform: translateY(-5px);
+        /* Apply hover effects only on devices with a fine pointer (e.g., mouse) and hover capability */
+        @media (hover: hover) and (pointer: fine) {
+            .modal-button:hover {
+                background: linear-gradient(145deg, #facc15, #fbbf24);
+                box-shadow: 
+                    0 12px 35px rgba(251, 191, 36, 0.6),
+                    0 0 30px rgba(251, 191, 36, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+                transform: translateY(-5px);
+            }
         }
         
         .modal-button:active {
@@ -161,7 +184,7 @@
         
         #xp-bar { 
             background: linear-gradient(45deg, #3b82f6, #2563eb, #1d4ed8);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            box-shadow: inset 0 2px 4px rgba(0,0:0,0.3);
         }
         
         .text-glow {
@@ -210,120 +233,161 @@
             50% { transform: scale(1.5); opacity: 0.8; }
             100% { transform: scale(3); opacity: 0; }
         }
+
+        /* 광고 컨테이너 스타일 추가 및 수정 */
+        .ad-container {
+            width: 320px; /* 광고 폭에 맞춤 */
+            height: 50px; /* 광고 높이에 맞춤 */
+            /* Removed: margin: 20px auto; */ /* 위아래 여백 20px, 좌우 자동 (중앙 정렬) */
+            display: flex; /* 내부 광고를 중앙에 정렬하기 위해 flex 사용 */
+            justify-content: center; /* 가로 중앙 정렬 */
+            align-items: center; /* 세로 중앙 정렬 */
+            overflow: hidden; /* 혹시 모를 내용 넘침 방지 */
+            flex-shrink: 0; /* 광고 영역이 줄어들지 않도록 방지 */
+        }
+
+        .ad-placeholder {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        /* Style for the bottom ad container to ensure it's always visible */
+        #bottom-ad-container {
+            /* Changed from fixed to relative within flex flow */
+            position: relative; 
+            bottom: auto;
+            left: auto;
+            transform: none; /* Remove translateX centering */
+            width: 100%; /* Ensure it takes full width */
+            z-index: 10; /* Ensure it's above other elements */
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%); /* Add a background to make it distinct */
+            border-top: 2px solid rgba(251, 191, 36, 0.3); /* Add a top border for visual separation */
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.5); /* Add shadow for depth */
+            padding: 10px 0; /* Add some vertical padding */
+            flex-shrink: 0; /* Prevent shrinking in flex container */
+        }
+
+        #game-ui {
+            /* Changed from absolute to relative within flex flow */
+            position: relative;
+            top: auto;
+            left: auto;
+            width: 100%;
+            padding: 1rem; /* p-4 in Tailwind */
+            z-index: 10;
+            flex-shrink: 0; /* Prevent shrinking in flex container */
+        }
+
+        /* Modals should still be absolute/fixed to overlay everything */
+        #start-modal, #level-up-modal, #game-over-modal, #score-submit-modal, #ranking-modal {
+            position: fixed; /* Keep modals fixed to overlay the entire viewport */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen text-white p-2">
+<body class="flex flex-col items-center text-white gap-y-4"> <!-- Modified: Added gap-y-4 for spacing -->
 
-    <!-- Game UI -->
-    <div id="game-ui" class="absolute top-0 left-0 w-full p-4 z-10 text-white">
-        <div class="max-w-4xl mx-auto flex justify-between items-center gap-4">
-            <div class="flex-1">
-                <div class="text-sm font-bold mb-1">HP</div>
-                <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
-                    <div id="hp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 100%"></div>
+    <div id="game-ui">
+        <!-- MODIFIED: Changed flex direction for mobile and added responsive widths -->
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-4">
+            <!-- HP and XP will be in a row on small screens and above, and in two rows on mobile -->
+            <!-- MODIFIED: Added sm:w-48 for larger bars on PC screens -->
+            <div class="flex w-full sm:w-auto gap-4"> <!-- Container for HP and XP -->
+                <div class="flex-1 sm:w-48">
+                    <div class="text-sm font-bold mb-1">HP</div>
+                    <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
+                        <div id="hp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div class="flex-1 sm:w-48">
+                    <div class="text-sm font-bold mb-1">XP</div>
+                    <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
+                        <div id="xp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
-            <div class="flex-1">
-                <div class="text-sm font-bold mb-1">XP</div>
-                <div class="w-full bg-gray-800 rounded-full h-6 border border-gray-600 shadow-inner ui-panel">
-                    <div id="xp-bar" class="ui-bar-gradient h-full rounded-full" style="width: 0%"></div>
+            
+            <!-- LV/TIME and KILLS will be in a row on small screens and above, and in two rows on mobile -->
+            <div class="flex w-full sm:w-auto gap-4"> <!-- Container for LV/TIME and KILLS -->
+                <div class="text-center ui-panel p-3 rounded-lg flex-1">
+                    <div class="text-lg font-bold">LV: <span id="level" class="text-amber-400">1</span></div>
+                    <div class="text-lg font-bold">TIME: <span id="timer" class="text-blue-400">00:00</span></div>
                 </div>
-            </div>
-            <div class="text-center ui-panel p-3 rounded-lg">
-                <div class="text-lg font-bold">LV: <span id="level" class="text-amber-400">1</span></div>
-                <div class="text-lg font-bold">TIME: <span id="timer" class="text-blue-400">00:00</span></div>
-            </div>
-            <div class="text-center ui-panel p-3 rounded-lg">
-                <div class="text-lg font-bold">KILLS</div>
-                <div class="text-3xl font-bold text-red-400" id="kill-count">0</div>
+                <div class="text-center ui-panel p-3 rounded-lg flex-1">
+                    <div class="text-lg sm:text-xl font-bold">KILLS</div>
+                    <div class="text-2xl sm:text-3xl font-bold text-red-400" id="kill-count">0</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Game Canvas -->
-    <canvas id="game-canvas"></canvas>
+    <canvas id="game-canvas"></canvas> <!-- Modified: Removed flex-grow -->
 
-    <!-- Start Modal -->
     <div id="start-modal" class="absolute inset-0 modal-backdrop flex flex-col justify-center items-center z-30">
-        <h1 class="text-8xl font-bold text-amber-400 mb-12 text-glow game-title">서진 서바이벌 특공대</h1>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-8xl font-bold text-amber-400 mb-8 text-glow game-title text-center px-2">서진 서바이벌 특공대</h1>
         <div class="mb-8 text-center text-gray-300">
-            <p class="text-xl mb-2">🚀 무한 생존 액션 슈터</p>
-            <p class="text-lg">적들을 물리치고 최대한 오래 살아남으세요!</p>
+            <p class="text-base sm:text-xl mb-2">🚀 무한 생존 액션 슈터</p>
+            <p class="text-sm sm:text-lg">적들을 물리치고 최대한 오래 살아남으세요!</p>
         </div>
-        <button id="start-button" class="px-12 py-6 text-black font-bold rounded-xl text-3xl modal-button">
+        <button id="start-button" class="px-8 py-4 text-2xl sm:px-12 sm:py-6 sm:text-3xl text-black font-bold rounded-xl modal-button">
             🎮 게임 시작
+        </button>
+        <button id="music-toggle-button" class="mt-4 px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg text-gray-400 hover:text-gray-200 transition-colors">
+            🎵 음악 끄기
         </button>
     </div>
 
-    <!-- Level Up Modal -->
     <div id="level-up-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-20 hidden">
-        <h2 class="text-6xl font-bold text-amber-400 mb-8 animate-pulse text-glow">⚡ 레벨 업! ⚡</h2>
-        <p class="text-xl text-gray-300 mb-8">강화할 능력을 선택하세요</p>
-        <div id="upgrade-options" class="flex flex-col sm:flex-row gap-8">
+        <h2 class="text-4xl sm:text-6xl font-bold text-amber-400 mb-8 animate-pulse text-glow">⚡ 레벨 업! ⚡</h2>
+        <p class="text-base sm:text-xl text-gray-300 mb-8">강화할 능력을 선택하세요</p>
+        <div id="upgrade-options" class="flex flex-col sm:flex-row gap-4 sm:gap-8">
             <!-- Upgrade cards will be generated here -->
         </div>
     </div>
 
-    <!-- Game Over Modal -->
     <div id="game-over-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-20 hidden">
-        <h2 class="text-7xl font-bold text-red-500 mb-6 text-glow">💀 게임 오버 💀</h2>
-        <div class="bg-black/50 p-8 rounded-xl border border-red-500/30 mb-8 text-center">
-            <p class="text-2xl mb-3">🕐 생존 시간: <span id="final-time" class="font-bold text-amber-300"></span></p>
-            <p class="text-2xl mb-3">⚔️ 처치한 적: <span id="final-kills" class="font-bold text-red-400"></span></p>
+        <h2 class="text-5xl sm:text-7xl font-bold text-red-500 mb-6 text-glow">💀 게임 오버 💀</h2>
+        <div class="bg-black/50 p-6 sm:p-8 rounded-xl border border-red-500/30 mb-8 text-center">
+            <p class="text-lg sm:text-2xl mb-3">🕐 생존 시간: <span id="final-time" class="font-bold text-amber-300"></span></p>
+            <p class="text-lg sm:text-2xl mb-3">⚔️ 처치한 적: <span id="final-kills" class="font-bold text-red-400"></span></p>
         </div>
-        <button id="restart-button" class="mt-4 px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
+        <button id="restart-button" class="mt-4 px-8 py-4 text-xl sm:px-12 sm:py-6 sm:text-2xl text-black font-bold rounded-xl modal-button">
             🔄 다시 도전
         </button>
     </div>
 
-    <!-- Revive Modal -->
-    <div id="revive-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-50 hidden">
-        <h2 class="text-6xl font-bold text-green-400 mb-6 text-glow">✨ 부활 기회! ✨</h2>
-        <div class="bg-black/50 p-8 rounded-xl border border-green-500/30 mb-8 text-center">
-            <p class="text-2xl text-gray-200 mb-4">광고를 시청하고 게임을 이어가세요!</p>
-            <p class="text-lg text-green-300">💚 완전한 체력으로 부활합니다</p>
-        </div>
-        <button id="watch-ad-button" class="px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
-            📺 광고 보고 이어하기
-        </button>
-        <div id="ad-timer" class="text-xl text-gray-300 mt-6 hidden bg-black/50 p-4 rounded-lg">
-            ⏳ 광고 시청 중... <span id="ad-countdown" class="text-amber-400 font-bold">3</span>초
-        </div>
-        <button id="end-game-button" class="mt-6 px-8 py-4 text-gray-400 hover:text-gray-200 text-lg transition-colors">
-            ❌ 게임 종료
-        </button>
-    </div>
-
-    <!-- Score Submission Modal -->
     <div id="score-submit-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
-        <h2 class="text-5xl font-bold text-amber-400 mb-6 text-glow">🏆 점수 기록 🏆</h2>
-        <div class="bg-black/50 p-8 rounded-xl border border-amber-500/30 mb-6 text-center">
-            <p class="text-xl text-gray-200 mb-4">당신의 점수를 랭킹에 기록하세요!</p>
+        <h2 class="text-4xl sm:text-5xl font-bold text-amber-400 mb-6 text-glow">� 점수 기록 🏆</h2>
+        <div class="bg-black/50 p-6 sm:p-8 rounded-xl border border-amber-500/30 mb-6 text-center">
+            <p class="text-lg sm:text-xl text-gray-200 mb-4">당신의 점수를 랭킹에 기록하세요!</p>
             <div class="mb-6">
-                <label for="player-name-input" class="block text-gray-300 text-lg font-bold mb-3 text-center">✏️ 이름을 입력하세요:</label>
+                <label for="player-name-input" class="block text-gray-300 text-base sm:text-lg font-bold mb-3 text-center">✏️ 이름을 입력하세요:</label>
                 <input type="text" id="player-name-input" maxlength="10" placeholder="최대 10자"
-                       class="px-4 py-3 rounded-lg bg-stone-800 text-white border-2 border-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-center text-xl w-64 transition-all">
+                       class="px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-stone-800 text-white border-2 border-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-center text-lg sm:text-xl w-full max-w-xs sm:w-64 transition-all">
             </div>
         </div>
-        <button id="submit-score-button" class="px-10 py-5 text-black font-bold rounded-xl text-xl modal-button">
+        <button id="submit-score-button" class="px-8 py-4 text-lg sm:px-10 sm:py-5 sm:text-xl text-black font-bold rounded-xl modal-button">
             💾 점수 기록하기
         </button>
-        <button id="skip-score-button" class="mt-4 text-gray-400 hover:text-gray-200 text-lg transition-colors">
+        <button id="skip-score-button" class="mt-4 text-gray-400 hover:text-gray-200 text-base sm:text-lg transition-colors">
             ⏭️ 건너뛰기
         </button>
     </div>
 
-    <!-- Ranking Display Modal -->
     <div id="ranking-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
-        <h2 class="text-6xl font-bold text-amber-400 mb-8 text-glow">🏅 명예의 전당 🏅</h2>
-        <div class="bg-black/70 p-8 rounded-xl shadow-2xl w-11/12 max-w-2xl max-h-[70vh] overflow-y-auto border-2 border-amber-500/30 backdrop-blur-sm">
-            <table class="w-full text-left text-gray-200">
+        <h2 class="text-5xl sm:text-6xl font-bold text-amber-400 mb-8 text-glow">🏅 명예의 전당 🏅</h2>
+        <div class="bg-black/70 p-6 sm:p-8 rounded-xl shadow-2xl w-11/12 max-w-2xl max-h-[70vh] overflow-y-auto border-2 border-amber-500/30 backdrop-blur-sm">
+            <table class="w-full text-left text-gray-200 text-sm sm:text-base">
                 <thead>
                     <tr class="border-b-2 border-amber-500/50 text-amber-300">
-                        <th class="py-4 px-4 text-center">🏆 순위</th>
-                        <th class="py-4 px-4">👤 이름</th>
-                        <th class="py-4 px-4 text-right">🕐 시간</th>
-                        <th class="py-4 px-4 text-right">⚔️ 처치</th>
+                        <th class="py-2 px-2 sm:py-4 sm:px-4 text-center">🏆 순위</th>
+                        <th class="py-2 px-2 sm:py-4 sm:px-4">👤 이름</th>
+                        <th class="py-2 px-2 sm:py-4 sm:px-4 text-right">🕐 시간</th>
+                        <th class="py-2 px-2 sm:py-4 sm:px-4 text-right">⚔️ 처치</th>
                     </tr>
                 </thead>
                 <tbody id="ranking-list">
@@ -331,9 +395,17 @@
                 </tbody>
             </table>
         </div>
-        <button id="close-ranking-button" class="mt-8 px-12 py-6 text-black font-bold rounded-xl text-2xl modal-button">
+        <button id="close-ranking-button" class="mt-8 px-8 py-4 text-xl sm:px-12 sm:py-6 sm:text-2xl text-black font-bold rounded-xl modal-button">
             ✖️ 닫기
         </button>
+    </div>
+
+    <!-- Kakao Adfit Ad Container at the bottom -->
+    <div id="bottom-ad-container" class="ad-container">
+        <ins class="kakao_ad_area"
+             data-ad-unit="DAN-ttonLLNjhNuIA19w"
+             data-ad-width="320"
+             data-ad-height="50"></ins>
     </div>
 
     <script type="module">
@@ -360,13 +432,6 @@
         const finalKillsEl = document.getElementById('final-kills');
         const restartButton = document.getElementById('restart-button');
 
-        // Revive UI Elements
-        const reviveModal = document.getElementById('revive-modal');
-        const watchAdButton = document.getElementById('watch-ad-button');
-        const adTimerEl = document.getElementById('ad-timer');
-        const adCountdownEl = document.getElementById('ad-countdown');
-        const endGameButton = document.getElementById('end-game-button');
-
         // Ranking UI Elements
         const scoreSubmitModal = document.getElementById('score-submit-modal');
         const playerNameInput = document.getElementById('player-name-input');
@@ -376,15 +441,19 @@
         const rankingList = document.getElementById('ranking-list');
         const closeRankingButton = document.getElementById('close-ranking-button');
 
+        // Music Toggle Button
+        const musicToggleButton = document.getElementById('music-toggle-button');
+
         let mousePos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
         let isPaused = true;
         let gameLoopId;
         let lastTimestamp = 0;
         let particles = [];
         let screenShake = { intensity: 0, duration: 0, x: 0, y: 0 };
-        let hasRevived = false;
         let backgroundParticles = [];
         let isGameOverSoundPlayed = false; // Added flag to control game over sound
+        let isMusicPlaying = false; // Track music state
+        let backgroundMusic; // Tone.js Sampler for background music
 
         // Firebase variables
         let app;
@@ -524,6 +593,38 @@
             }
         }
 
+        /**
+         * Initializes and starts background music.
+         */
+        function initBackgroundMusic() {
+            // Using a simple synth loop for background music
+            backgroundMusic = new Tone.Loop(time => {
+                synth.triggerAttackRelease("C4", "8n", time);
+                synth.triggerAttackRelease("E4", "8n", time + 0.25);
+                synth.triggerAttackRelease("G4", "8n", time + 0.5);
+                synth.triggerAttackRelease("B4", "8n", time + 0.75);
+            }, "1n"); 
+            
+            // Music will now start only after a user gesture in startGame().
+        }
+
+        /**
+         * Toggles background music play/pause and all other game sounds.
+         */
+        function toggleMusic() {
+            // Tone.start() is now called in startGame() after a user gesture.
+            if (isMusicPlaying) {
+                backgroundMusic.stop();
+                Tone.Destination.mute = true; // Mute all sounds
+                musicToggleButton.textContent = '🎵 음악 켜기';
+            } else {
+                backgroundMusic.start(0);
+                Tone.Destination.mute = false; // Unmute all sounds
+                musicToggleButton.textContent = '🔇 음악 끄기';
+            }
+            isMusicPlaying = !isMusicPlaying;
+        }
+
         // --- Game Constants (Enhanced for faster leveling) ---
         const PLAYER_SPEED = 3.5;
         const PROJECTILE_SPEED = 8;
@@ -545,6 +646,10 @@
         const BOSS_SPEED = 0.2;
         const BOSS_DAMAGE = 20;
         const POWER_MISSILE_INTERVAL = 5000;
+
+        // Optimization Constants
+        const MAX_PARTICLES = 500; // Limit total particles on screen
+        const MAX_ENEMIES_ON_SCREEN = 150; // Limit total enemies on screen
 
         // --- Game State ---
         const gameState = {
@@ -864,6 +969,7 @@
                 // Powerful missile has higher damage and a larger base radius
                 const powerMissileDamage = this.damage * 3; // Example: 3x normal damage
                 const powerMissileRadius = PROJECTILE_BASE_RADIUS * 2 + (powerMissileDamage / 10); // Larger and scales with damage
+                // Power projectiles now have a lifespan
                 gameState.projectiles.push(new Projectile(this.x, this.y, angle, powerMissileDamage, PROJECTILE_SPEED * 1.2, powerMissileRadius, 'power'));
                 playShootSound(); // Use the same shoot sound for now
             }
@@ -959,6 +1065,8 @@
                 this.trail = [];
                 this.rotation = angle;
                 this.pulsePhase = Math.random() * Math.PI * 2;
+                // Add lifespan for power projectiles, normal projectiles last indefinitely until hit or off-screen
+                this.lifespan = type === 'power' ? 200 : Infinity; // frames
             }
             
             draw() {
@@ -1051,8 +1159,17 @@
                 this.y += this.vy;
                 this.pulsePhase += 0.3;
                 
+                // Decrease lifespan for power projectiles
+                if (this.type === 'power') {
+                    this.lifespan--;
+                }
+
                 // Add particle effects while moving
                 if (Math.random() < 0.3) {
+                    // Limit particles to prevent performance issues
+                    if (particles.length >= MAX_PARTICLES) {
+                        particles.shift(); // Remove the oldest particle
+                    }
                     particles.push(new Particle(
                         this.x + (Math.random() - 0.5) * this.radius,
                         this.y + (Math.random() - 0.5) * this.radius,
@@ -1336,8 +1453,40 @@
         // --- Game Logic ---
         function createExplosion(x, y, color, count = 20) {
             for (let i = 0; i < count; i++) {
+                // Limit particles to prevent performance issues
+                if (particles.length >= MAX_PARTICLES) {
+                    particles.shift(); // Remove the oldest particle
+                }
                 particles.push(new Particle(x, y, color, 4, 3, 60));
             }
+        }
+
+        /**
+         * Adjusts the canvas size to fit the remaining viewport space.
+         */
+        function adjustCanvasSize() {
+            const gameUi = document.getElementById('game-ui');
+            const bottomAdContainer = document.getElementById('bottom-ad-container');
+            
+            // Get the actual rendered height of UI and ad container
+            const uiHeight = gameUi.offsetHeight;
+            const adHeight = bottomAdContainer.offsetHeight;
+            
+            // The body has gap-y-4, which is 16px. There are two gaps (UI-Canvas, Canvas-Ad).
+            const gapHeight = 16 * 2; 
+
+            // Calculate available height for the canvas
+            const availableHeight = window.innerHeight - uiHeight - adHeight - gapHeight;
+
+            canvas.width = canvas.clientWidth; // Keep width responsive
+            canvas.height = Math.max(0, availableHeight); // Ensure height is not negative
+
+            // Adjust player position if canvas shrinks
+            if(gameState.player) {
+                gameState.player.x = Math.min(gameState.player.x, canvas.width - gameState.player.radius);
+                gameState.player.y = Math.min(gameState.player.y, canvas.height - gameState.player.radius);
+            }
+            initBackgroundParticles(); // Re-initialize background particles for new canvas size
         }
 
         /**
@@ -1345,9 +1494,8 @@
          * This function now performs a complete reset of player stats and upgrades.
          */
         function initializeGame() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
+            adjustCanvasSize(); // Call adjustCanvasSize here
+            
             // Create a brand new player instance, completely resetting all stats and upgrades
             gameState.player = new Player(canvas.width / 2, canvas.height / 2);
             
@@ -1356,12 +1504,10 @@
             gameState.xpGems = [];
             particles = [];
             gameState.gameTime = 0;
-            gameState.killCount = 0;
             isPaused = true;
             gameState.lastEnemySpawnTime = 0;
             gameState.isBossActive = false;
             gameState.boss = null;
-            hasRevived = false;
             gameState.pulseEffects = []; // Clear pulse effects on new game
             isGameOverSoundPlayed = false; // Reset the flag for game over sound
 
@@ -1370,18 +1516,26 @@
             hideAllModals();
             startModal.classList.remove('hidden');
             startModal.classList.add('flex');
+
+            // Ensure music state is consistent when initializing game
+            if (isMusicPlaying) {
+                musicToggleButton.textContent = '🔇 음악 끄기';
+            } else {
+                musicToggleButton.textContent = '🎵 음악 켜기';
+            }
         }
 
         /**
          * Starts the game, unpauses it, hides the start modal, and begins the game loop.
          */
         function startGame() {
-            Tone.start(); // Initialize Tone.js audio context
+            Tone.start(); // Ensure audio context is active after a user gesture
             isPaused = false;
             startModal.classList.add('hidden');
             startModal.classList.remove('flex');
             lastTimestamp = performance.now();
             gameLoopId = requestAnimationFrame(gameLoop);
+            toggleMusic(); // Re-added: Start music when game starts
         }
 
         /**
@@ -1394,30 +1548,8 @@
             finalTimeEl.textContent = formatTime(gameState.gameTime);
             finalKillsEl.textContent = gameState.killCount;
 
-            // Show revive modal if player hasn't revived yet
-            if (!hasRevived) {
-                showReviveModal();
-            } else {
-                // If already revived, go straight to score submission
-                showScoreSubmitModal();
-            }
-        }
-
-        /**
-         * Revives the player after watching an ad.
-         */
-        function reviveGame() {
-            hideAllModals();
-            gameState.player.hp = gameState.player.maxHp; // Restore full HP
-            gameState.enemies = []; // Clear all enemies on screen
-            gameState.projectiles = []; // Clear all projectiles
-            particles = []; // Clear all particles
-            gameState.pulseEffects = []; // Clear pulse effects
-            hasRevived = true; // Mark as revived
-            isPaused = false; // Resume game
-            lastTimestamp = performance.now(); // Reset timestamp for smooth continuation
-            gameLoopId = requestAnimationFrame(gameLoop);
-            console.log("Player revived!");
+            // 이제는 항상 점수 제출 모달을 표시합니다.
+            showScoreSubmitModal();
         }
 
         /**
@@ -1474,7 +1606,8 @@
             }
 
             // Spawn enemies at regular intervals ONLY if boss is not active
-            if (!gameState.isBossActive && Date.now() - gameState.lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL) {
+            // Add check for MAX_ENEMIES_ON_SCREEN
+            if (!gameState.isBossActive && Date.now() - gameState.lastEnemySpawnTime > ENEMY_SPAWN_INTERVAL && gameState.enemies.length < MAX_ENEMIES_ON_SCREEN) {
                 spawnEnemy();
                 gameState.lastEnemySpawnTime = Date.now();
             }
@@ -1482,14 +1615,11 @@
             gameState.player.update(deltaTime);
             // Update and clean up particles
             particles.forEach((p, i) => { p.update(); if (p.lifespan <= 0) particles.splice(i, 1); });
-            // Update and clean up projectiles that go off-screen
+            // Update and clean up projectiles that go off-screen or expire (power projectiles)
             gameState.projectiles.forEach((p, i) => { 
                 p.update(); 
-                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) {
-                    // Only remove normal projectiles when off-screen. Power projectiles might need to persist longer.
-                    if (p.type === 'normal') {
-                        gameState.projectiles.splice(i, 1); 
-                    }
+                if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height || (p.type === 'power' && p.lifespan <= 0)) {
+                    gameState.projectiles.splice(i, 1); 
                 }
             });
             
@@ -1516,6 +1646,7 @@
                             p.hitEnemies.add(enemy); // Mark enemy as hit by this projectile
 
                             // If it's a normal projectile, remove it after hit
+                            // If it's a power projectile, it continues (piercing) but still has a lifespan
                             if (p.type === 'normal') {
                                 gameState.projectiles.splice(projIndex, 1); 
                             }
@@ -1643,6 +1774,11 @@
          * Enemy HP and speed scale gradually with game time.
          */
         function spawnEnemy() {
+            // Check if enemy limit is reached before spawning
+            if (gameState.enemies.length >= MAX_ENEMIES_ON_SCREEN) {
+                return; 
+            }
+
             const side = Math.floor(Math.random() * 4); // 0:top, 1:right, 2:bottom, 3:left
             let x, y;
             const radius = 15 + Math.random() * 10; // Random size
@@ -1729,8 +1865,9 @@
             // Create and append upgrade cards to the modal
             selectedUpgrades.forEach(upgrade => {
                 const card = document.createElement('div');
-                card.className = 'upgrade-card bg-stone-700 p-6 rounded-lg shadow-xl text-center cursor-pointer hover:bg-stone-600 w-64 border-2 border-stone-600 hover:border-amber-400';
-                card.innerHTML = `<h3 class="text-2xl font-bold text-amber-300 mb-2">${upgrade.name}</h3><p class="text-gray-300">${upgrade.description}</p>`;
+                // Removed hover effects from the class list to ensure consistent appearance
+                card.className = 'upgrade-card bg-stone-700 p-4 sm:p-6 rounded-lg shadow-xl text-center cursor-pointer w-full sm:w-64 border-2 border-stone-600';
+                card.innerHTML = `<h3 class="text-xl sm:text-2xl font-bold text-amber-300 mb-2">${upgrade.name}</h3><p class="text-sm sm:text-base text-gray-300">${upgrade.description}</p>`;
                 card.onclick = () => selectUpgrade(upgrade);
                 upgradeOptionsContainer.appendChild(card);
             });
@@ -1764,40 +1901,6 @@
             if (gameOverModal) { gameOverModal.classList.add('hidden'); gameOverModal.classList.remove('flex'); }
             if (scoreSubmitModal) { scoreSubmitModal.classList.add('hidden'); scoreSubmitModal.classList.remove('flex'); }
             if (rankingModal) { rankingModal.classList.add('hidden'); rankingModal.classList.remove('flex'); }
-            if (reviveModal) { reviveModal.classList.add('hidden'); reviveModal.classList.remove('flex'); }
-        }
-
-        /**
-         * Displays the revive modal.
-         */
-        function showReviveModal() {
-            hideAllModals();
-            reviveModal.classList.remove('hidden');
-            reviveModal.classList.add('flex');
-            watchAdButton.disabled = false; // Enable button
-            adTimerEl.classList.add('hidden'); // Hide ad timer initially
-        }
-
-        /**
-         * Simulates watching an ad and then revives the player.
-         */
-        function watchAdAndRevive() {
-            watchAdButton.disabled = true; // Disable button during ad
-            endGameButton.disabled = true; // Disable end game button
-            adTimerEl.classList.remove('hidden'); // Show ad timer
-
-            let countdown = 3;
-            adCountdownEl.textContent = countdown;
-
-            const adInterval = setInterval(() => {
-                countdown--;
-                adCountdownEl.textContent = countdown;
-                if (countdown <= 0) {
-                    clearInterval(adInterval);
-                    adTimerEl.classList.add('hidden'); // Hide ad timer
-                    reviveGame(); // Call revive function
-                }
-            }, 1000);
         }
 
         /**
@@ -1845,8 +1948,10 @@
             } catch (e) {
                 console.error("Error adding document: ", e);
                 // If submission fails, show the regular game over modal
-                gameOverModal.classList.remove('hidden');
-                gameOverModal.classList.add('flex');
+                // MODIFIED: Now goes to start modal on error as well
+                hideAllModals();
+                startModal.classList.remove('hidden');
+                startModal.classList.add('flex');
             }
         }
 
@@ -1888,10 +1993,10 @@
                     top10Scores.forEach((data) => {
                         const row = `
                             <tr class="border-b border-stone-700 last:border-b-0 hover:bg-stone-700">
-                                <td class="py-2 px-4">${rank++}</td>
-                                <td class="py-2 px-4">${data.userName}</td>
-                                <td class="py-2 px-4 text-right">${formatTime(data.time * 1000)}</td>
-                                <td class="py-2 px-4 text-right">${data.kills}</td>
+                                <td class="py-2 px-2 sm:py-2 sm:px-4">${rank++}</td>
+                                <td class="py-2 px-2 sm:py-2 sm:px-4">${data.userName}</td>
+                                <td class="py-2 px-2 sm:py-2 sm:px-4 text-right">${formatTime(data.time * 1000)}</td>
+                                <td class="py-2 px-2 sm:py-2 sm:px-4 text-right">${data.kills}</td>
                             </tr>
                         `;
                         rankingList.innerHTML += row;
@@ -1906,13 +2011,7 @@
         // --- Event Listeners ---
         // Handle window resize to adjust canvas dimensions
         window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Adjust player position if canvas shrinks
-            if(gameState.player) {
-                gameState.player.x = Math.min(gameState.player.x, canvas.width - gameState.player.radius);
-                gameState.player.y = Math.min(gameState.player.y, canvas.height - gameState.player.radius);
-            }
+            adjustCanvasSize(); // Call adjustCanvasSize on resize
         });
 
         /**
@@ -1937,26 +2036,28 @@
         startButton.addEventListener('click', startGame);
         restartButton.addEventListener('click', restartGame);
         submitScoreButton.addEventListener('click', submitScore);
+        
+        // MODIFIED: Skip and Close Ranking buttons now lead to the start modal and initialize the game
         skipScoreButton.addEventListener('click', () => {
+            initializeGame(); // Fully reset the game state
             hideAllModals();
-            gameOverModal.classList.remove('hidden');
-            gameOverModal.classList.add('flex'); // Show game over modal if skipped
+            startModal.classList.remove('hidden');
+            startModal.classList.add('flex');
         });
         closeRankingButton.addEventListener('click', () => {
+            initializeGame(); // Fully reset the game state
             hideAllModals();
-            gameOverModal.classList.remove('hidden');
-            gameOverModal.classList.add('flex'); // Show game over modal after closing rankings
+            startModal.classList.remove('hidden');
+            startModal.classList.add('flex');
         });
-        watchAdButton.addEventListener('click', watchAdAndRevive);
-        endGameButton.addEventListener('click', () => {
-            hideAllModals();
-            showScoreSubmitModal(); // Go to score submission if not reviving
-        });
+        musicToggleButton.addEventListener('click', toggleMusic); // Music toggle button listener
 
         // Initialize Firebase and then the game when the window loads
         window.onload = async () => {
             await initFirebase(); // Ensure Firebase is initialized before game starts
+            initBackgroundMusic(); // Initialize background music
             initializeGame();
+            // No need to call initializeBottomAd() as Kakao Adfit script handles it
         };
     </script>
 </body>
