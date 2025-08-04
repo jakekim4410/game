@@ -665,7 +665,7 @@
                 hp: { name: "❤️ 최대 HP 증가", description: "최대 HP가 25 증가하고 모두 회복합니다.", apply: () => { gameState.player.maxHp += 25; gameState.player.hp = gameState.player.maxHp; } },
                 speed: { name: "👟 이동 속도 증가", description: "이동 속도가 크게 빨라집니다.", apply: () => gameState.player.speed += 0.8 },
                 magnet: { name: "🧲 자석 범위 증가", description: "XP 획득 범위가 크게 넓어집니다.", apply: () => gameState.player.magnetRadius += 80 },
-                diagonalShot: { name: "� 대각선 발사", description: "4개의 대각선 방향으로 투사체를 추가 발사합니다.", apply: () => gameState.player.hasDiagonalShot = true, once: true },
+                diagonalShot: { name: "💥 대각선 발사", description: "4개의 대각선 방향으로 투사체를 추가 발사합니다.", apply: () => gameState.player.hasDiagonalShot = true, once: true },
                 powerMissile: { name: "🚀 초강력 미사일", description: "매 5초마다 강력한 관통 미사일을 발사합니다.", apply: () => gameState.player.hasPowerMissile = true, once: true },
                 aoePulse: { name: "🌀 에너지 파동", description: "주기적으로 주변 적들에게 강력한 피해를 주는 파동을 방출합니다.", apply: () => gameState.player.hasAoePulse = true, once: true }
             },
@@ -2165,4 +2165,5 @@
         };
     </script>
 </body>
+
 </html>
