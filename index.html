@@ -261,8 +261,10 @@
             transform: none; /* Remove translateX centering */
             width: 100%; /* Ensure it takes full width */
             z-index: 10; /* Ensure it's above other elements */
-            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%); /* Add a background to make it distinct */
-            border-top: 2px solid rgba(251, 191, 36, 0.3); /* Add a top border for visual separation */
+            /* MODIFIED: Made background more opaque/solid */
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%); 
+            /* MODIFIED: Stronger border color */
+            border-top: 2px solid #fbbf24; 
             box-shadow: 0 -8px 32px rgba(0,0,0,0.5); /* Add shadow for depth */
             padding: 10px 0; /* Add some vertical padding */
             flex-shrink: 0; /* Prevent shrinking in flex container */
@@ -275,17 +277,20 @@
             left: auto;
             width: 100%;
             padding: 1rem; /* p-4 in Tailwind */
+            padding-bottom: 2rem; /* Increased bottom padding to create more space */
             z-index: 10;
             flex-shrink: 0; /* Prevent shrinking in flex container */
         }
 
         /* Modals should still be absolute/fixed to overlay everything */
-        #start-modal, #level-up-modal, #game-over-modal, #score-submit-modal, #ranking-modal {
+        #start-modal, #level-up-modal, #game-over-modal, #ranking-modal {
             position: fixed; /* Keep modals fixed to overlay the entire viewport */
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            padding: 2rem 1rem; /* Added padding to modals */
+            box-sizing: border-box; /* Include padding in element's total width and height */
         }
     </style>
 </head>
@@ -333,12 +338,40 @@
             <p class="text-base sm:text-xl mb-2">🚀 무한 생존 액션 슈터</p>
             <p class="text-sm sm:text-lg">적들을 물리치고 최대한 오래 살아남으세요!</p>
         </div>
-        <button id="start-button" class="px-8 py-4 text-2xl sm:px-12 sm:py-6 sm:text-3xl text-black font-bold rounded-xl modal-button">
+        <button id="start-button" class="px-10 py-5 text-3xl sm:px-14 sm:py-7 sm:text-4xl text-black font-bold rounded-xl modal-button">
             🎮 게임 시작
         </button>
         <button id="music-toggle-button" class="mt-4 px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg text-gray-400 hover:text-gray-200 transition-colors">
             🎵 음악 끄기
         </button>
+
+        <!-- New: Local High Score and Ranking preview on start screen -->
+        <div class="mt-8 bg-black/50 p-4 sm:p-6 rounded-xl border border-amber-500/30 w-11/12 max-w-md">
+            <h3 class="text-xl sm:text-2xl font-bold text-amber-300 mb-4 text-center">🏅 최고 기록 🏅</h3>
+            <div id="local-high-score" class="text-lg sm:text-xl text-center text-gray-200 mb-4">
+                <!-- Local high score will be displayed here -->
+            </div>
+            <h3 class="text-xl sm:text-2xl font-bold text-amber-300 mb-4 text-center">🏆 TOP 랭킹 🏆</h3>
+            <table class="w-full text-left text-gray-200 text-sm sm:text-base">
+                <thead>
+                    <tr class="border-b-2 border-amber-500/50 text-amber-300">
+                        <th class="py-1 px-1 sm:py-2 sm:px-2 text-center">🏆 순위</th>
+                        <th class="py-1 px-1 sm:py-2 sm:px-2">👤 이름</th>
+                        <th class="py-1 px-1 sm:py-2 sm:px-2 text-right">🕐 시간</th>
+                        <th class="py-1 px-1 sm:py-2 sm:px-2 text-right">⚔️ 처치</th>
+                    </tr>
+                </thead>
+                <tbody id="start-ranking-list">
+                    <!-- Top local rankings will be inserted here -->
+                </tbody>
+            </table>
+            <button id="view-all-rankings-button" class="mt-4 w-full px-4 py-2 text-sm sm:text-base text-black font-bold rounded-lg modal-button">
+                전체 랭킹 보기
+            </button>
+            <div id="global-rank-percentage" class="mt-4 text-center text-sm sm:text-base text-gray-400">
+                <!-- Global rank percentage will be displayed here -->
+            </div>
+        </div>
     </div>
 
     <div id="level-up-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-20 hidden">
@@ -354,30 +387,21 @@
         <div class="bg-black/50 p-6 sm:p-8 rounded-xl border border-red-500/30 mb-8 text-center">
             <p class="text-lg sm:text-2xl mb-3">🕐 생존 시간: <span id="final-time" class="font-bold text-amber-300"></span></p>
             <p class="text-lg sm:text-2xl mb-3">⚔️ 처치한 적: <span id="final-kills" class="font-bold text-red-400"></span></p>
-        </div>
-        <button id="restart-button" class="mt-4 px-8 py-4 text-xl sm:px-12 sm:py-6 sm:text-2xl text-black font-bold rounded-xl modal-button">
-            🔄 다시 도전
-        </button>
-    </div>
-
-    <div id="score-submit-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
-        <h2 class="text-4xl sm:text-5xl font-bold text-amber-400 mb-6 text-glow">� 점수 기록 🏆</h2>
-        <div class="bg-black/50 p-6 sm:p-8 rounded-xl border border-amber-500/30 mb-6 text-center">
-            <p class="text-lg sm:text-xl text-gray-200 mb-4">당신의 점수를 랭킹에 기록하세요!</p>
-            <div class="mb-6">
-                <label for="player-name-input" class="block text-gray-300 text-base sm:text-lg font-bold mb-3 text-center">✏️ 이름을 입력하세요:</label>
+            <div class="mt-4">
+                <label for="player-name-input" class="block text-gray-300 text-base sm:text-lg font-bold mb-2">✏️ 이름을 입력하세요:</label>
                 <input type="text" id="player-name-input" maxlength="10" placeholder="최대 10자"
                        class="px-3 py-2 sm:px-4 sm:py-3 rounded-lg bg-stone-800 text-white border-2 border-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 text-center text-lg sm:text-xl w-full max-w-xs sm:w-64 transition-all">
             </div>
         </div>
-        <button id="submit-score-button" class="px-8 py-4 text-lg sm:px-10 sm:py-5 sm:text-xl text-black font-bold rounded-xl modal-button">
+        <button id="submit-score-button" class="px-8 py-4 text-xl sm:px-12 sm:py-6 sm:text-2xl text-black font-bold rounded-xl modal-button">
             💾 점수 기록하기
         </button>
-        <button id="skip-score-button" class="mt-4 text-gray-400 hover:text-gray-200 text-base sm:text-lg transition-colors">
-            ⏭️ 건너뛰기
+        <button id="restart-button" class="mt-4 px-6 py-3 text-base sm:px-8 sm:py-4 sm:text-lg text-gray-400 hover:text-gray-200 transition-colors">
+            🔄 다시 도전
         </button>
     </div>
 
+    <!-- Simplified Ranking Modal for local scores -->
     <div id="ranking-modal" class="absolute inset-0 modal-backdrop flex-col justify-center items-center z-40 hidden">
         <h2 class="text-5xl sm:text-6xl font-bold text-amber-400 mb-8 text-glow">🏅 명예의 전당 🏅</h2>
         <div class="bg-black/70 p-6 sm:p-8 rounded-xl shadow-2xl w-11/12 max-w-2xl max-h-[70vh] overflow-y-auto border-2 border-amber-500/30 backdrop-blur-sm">
@@ -391,7 +415,7 @@
                     </tr>
                 </thead>
                 <tbody id="ranking-list">
-                    <!-- Rankings will be inserted here -->
+                    <!-- Local rankings will be inserted here -->
                 </tbody>
             </table>
         </div>
@@ -400,8 +424,13 @@
         </button>
     </div>
 
+    <!-- Score Submission Feedback Message -->
+    <div id="feedback-message" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 rounded-lg shadow-lg z-50 hidden transition-opacity duration-300">
+        <!-- Message will be dynamically set here -->
+    </div>
+
     <!-- Kakao Adfit Ad Container at the bottom -->
-    <div id="bottom-ad-container" class="ad-container">
+    <div id="bottom-ad-container" class="ad-container mt-8">
         <ins class="kakao_ad_area"
              data-ad-unit="DAN-ttonLLNjhNuIA19w"
              data-ad-width="320"
@@ -409,11 +438,6 @@
     </div>
 
     <script type="module">
-        // Firebase imports
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
 
@@ -432,14 +456,19 @@
         const finalKillsEl = document.getElementById('final-kills');
         const restartButton = document.getElementById('restart-button');
 
-        // Ranking UI Elements
-        const scoreSubmitModal = document.getElementById('score-submit-modal');
-        const playerNameInput = document.getElementById('player-name-input');
+        // Ranking UI Elements (modified for local storage)
+        const playerNameInput = document.getElementById('player-name-input'); // Moved to game-over-modal
         const submitScoreButton = document.getElementById('submit-score-button'); 
-        const skipScoreButton = document.getElementById('skip-score-button');
         const rankingModal = document.getElementById('ranking-modal');
         const rankingList = document.getElementById('ranking-list');
         const closeRankingButton = document.getElementById('close-ranking-button');
+        const startRankingList = document.getElementById('start-ranking-list');
+        const viewAllRankingsButton = document.getElementById('view-all-rankings-button');
+        const localHighScoreEl = document.getElementById('local-high-score'); // New element for local high score
+        const globalRankPercentageEl = document.getElementById('global-rank-percentage'); // New element for global rank percentage
+
+        // Score Submission Feedback Message Element
+        const feedbackMessage = document.getElementById('feedback-message');
 
         // Music Toggle Button
         const musicToggleButton = document.getElementById('music-toggle-button');
@@ -455,44 +484,16 @@
         let isMusicPlaying = false; // Track music state
         let backgroundMusic; // Tone.js Sampler for background music
 
-        // Firebase variables
-        let app;
-        let db;
-        let auth;
-        let userId;
-        let appId;
+        // Local Storage Key
+        const LOCAL_STORAGE_SCORES_KEY = 'seojinSurvivalScores';
+
+        // Global Best Score for comparison (arbitrary, for motivation)
+        const GLOBAL_BEST_TIME_SECONDS = 465; // 7 minutes 45 seconds
+        const GLOBAL_BEST_KILLS = 1500;
 
         /**
-         * Initializes Firebase application and authenticates the user.
+         * Initializes background particles with enhanced effects
          */
-        async function initFirebase() {
-            appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-            const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-
-            if (Object.keys(firebaseConfig).length === 0) {
-                console.error("Firebase config is missing. Cannot initialize Firebase.");
-                return;
-            }
-
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            try {
-                if (typeof __initial_auth_token !== 'undefined') {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                userId = auth.currentUser?.uid || crypto.randomUUID();
-                console.log("Firebase initialized and authenticated. User ID:", userId);
-            } catch (error) {
-                console.error("Firebase authentication failed:", error);
-                userId = crypto.randomUUID();
-            }
-        }
-
-        // Initialize background particles with enhanced effects
         function initBackgroundParticles() {
             backgroundParticles = [];
             for (let i = 0; i < 80; i++) {
@@ -628,20 +629,20 @@
         // --- Game Constants (Enhanced for faster leveling) ---
         const PLAYER_SPEED = 3.5;
         const PROJECTILE_SPEED = 8;
-        const PROJECTILE_BASE_RADIUS = 5;
+        const PROJECTILE_BASE_RADIUS = 3; // Reduced from 5
         const ENEMY_SPEED_BASE = 0.2;
         const ENEMY_SPEED_SCALING_PER_LEVEL = 0.05;
         const ENEMY_HP_BASE = 1;
         const ENEMY_HP_SCALING_PER_LEVEL = 0;
         const ENEMY_SPAWN_INTERVAL = 1200;
-        const XP_GEM_SIZE = 12;
+        const XP_GEM_SIZE = 8; // Reduced from 12
         const XP_PER_LEVEL_BASE = 40; // Reduced from 70 to 40 for faster leveling
 
         const MAX_ENEMY_SPEED_LEVEL = 5;
         const MAX_ENEMY_HP_LEVEL = 8;
         const ENEMY_COUNT_INCREASE_PER_LEVEL = 0.3;
         const BOSS_APPEAR_TIME = 1200000;
-        const BOSS_RADIUS = 80;
+        const BOSS_RADIUS = 60; // Reduced from 80
         const BOSS_HP = 120;
         const BOSS_SPEED = 0.2;
         const BOSS_DAMAGE = 20;
@@ -664,7 +665,7 @@
                 hp: { name: "❤️ 최대 HP 증가", description: "최대 HP가 25 증가하고 모두 회복합니다.", apply: () => { gameState.player.maxHp += 25; gameState.player.hp = gameState.player.maxHp; } },
                 speed: { name: "👟 이동 속도 증가", description: "이동 속도가 크게 빨라집니다.", apply: () => gameState.player.speed += 0.8 },
                 magnet: { name: "🧲 자석 범위 증가", description: "XP 획득 범위가 크게 넓어집니다.", apply: () => gameState.player.magnetRadius += 80 },
-                diagonalShot: { name: "💥 대각선 발사", description: "4개의 대각선 방향으로 투사체를 추가 발사합니다.", apply: () => gameState.player.hasDiagonalShot = true, once: true },
+                diagonalShot: { name: "� 대각선 발사", description: "4개의 대각선 방향으로 투사체를 추가 발사합니다.", apply: () => gameState.player.hasDiagonalShot = true, once: true },
                 powerMissile: { name: "🚀 초강력 미사일", description: "매 5초마다 강력한 관통 미사일을 발사합니다.", apply: () => gameState.player.hasPowerMissile = true, once: true },
                 aoePulse: { name: "🌀 에너지 파동", description: "주기적으로 주변 적들에게 강력한 피해를 주는 파동을 방출합니다.", apply: () => gameState.player.hasAoePulse = true, once: true }
             },
@@ -718,7 +719,7 @@
 
         class Player {
             constructor(x, y) {
-                this.x = x; this.y = y; this.radius = 20;
+                this.x = x; this.y = y; this.radius = 15; // Reduced from 20
                 this.hp = 50; this.maxHp = 50;
                 this.xp = 0; this.level = 1; this.xpToNextLevel = XP_PER_LEVEL_BASE;
                 this.damage = 60; // Player's base projectile damage
@@ -1473,7 +1474,8 @@
             const adHeight = bottomAdContainer.offsetHeight;
             
             // The body has gap-y-4, which is 16px. There are two gaps (UI-Canvas, Canvas-Ad).
-            const gapHeight = 16 * 2; 
+            // Additionally, bottom-ad-container has mt-8 (32px)
+            const gapHeight = 16 * 2 + 32; 
 
             // Calculate available height for the canvas
             const availableHeight = window.innerHeight - uiHeight - adHeight - gapHeight;
@@ -1523,6 +1525,11 @@
             } else {
                 musicToggleButton.textContent = '🎵 음악 켜기';
             }
+
+            // New: Display top rankings on start screen
+            displayTopRankingsOnStartScreen();
+            displayLocalHighScore(); // Display local high score on start
+            updateGlobalRankPercentage(); // Update global rank percentage on start
         }
 
         /**
@@ -1548,8 +1555,12 @@
             finalTimeEl.textContent = formatTime(gameState.gameTime);
             finalKillsEl.textContent = gameState.killCount;
 
-            // 이제는 항상 점수 제출 모달을 표시합니다.
-            showScoreSubmitModal();
+            // Show game over modal with name input
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('flex');
+            playerNameInput.value = ''; // Clear previous input
+            playerNameInput.placeholder = "최대 10자"; // Reset placeholder
+            playerNameInput.classList.remove('border-red-500'); // Remove error styling
         }
 
         /**
@@ -1781,7 +1792,7 @@
 
             const side = Math.floor(Math.random() * 4); // 0:top, 1:right, 2:bottom, 3:left
             let x, y;
-            const radius = 15 + Math.random() * 10; // Random size
+            const radius = 10 + Math.random() * 8; // Reduced from 15 + Math.random() * 10; // Random size
 
             // Cap speed scaling at MAX_ENEMY_SPEED_LEVEL (level 5)
             const effectiveLevelForSpeed = Math.min(gameState.player.level, MAX_ENEMY_SPEED_LEVEL);
@@ -1899,26 +1910,33 @@
             if (startModal) { startModal.classList.add('hidden'); startModal.classList.remove('flex'); }
             if (levelUpModal) { levelUpModal.classList.add('hidden'); levelUpModal.classList.remove('flex'); }
             if (gameOverModal) { gameOverModal.classList.add('hidden'); gameOverModal.classList.remove('flex'); }
-            if (scoreSubmitModal) { scoreSubmitModal.classList.add('hidden'); scoreSubmitModal.classList.remove('flex'); }
-            if (rankingModal) { rankingModal.classList.add('hidden'); rankingModal.classList.remove('flex'); }
+            if (rankingModal) { rankingManager.hideRankingModal(); } // Use rankingManager for consistency
         }
 
         /**
-         * Displays the score submission modal.
+         * Displays a temporary feedback message to the user.
+         * @param {string} message - The message to display.
+         * @param {boolean} isSuccess - True for success (green), false for error (red).
          */
-        function showScoreSubmitModal() {
-            playerNameInput.value = ''; // Clear previous input
-            playerNameInput.placeholder = "최대 10자"; // Reset placeholder
-            playerNameInput.classList.remove('border-red-500'); // Remove error styling
-            scoreSubmitModal.classList.remove('hidden');
-            scoreSubmitModal.classList.add('flex');
+        function showFeedbackMessage(message, isSuccess = true) {
+            feedbackMessage.textContent = message;
+            feedbackMessage.className = `fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300 ${isSuccess ? 'bg-green-600' : 'bg-red-600'}`;
+            feedbackMessage.classList.remove('hidden');
+            feedbackMessage.style.opacity = '1';
+
+            setTimeout(() => {
+                feedbackMessage.style.opacity = '0';
+                setTimeout(() => {
+                    feedbackMessage.classList.add('hidden');
+                }, 300); // Wait for opacity transition to finish
+            }, 2000); // Display for 2 seconds
         }
 
         /**
-         * Submits the player's score to Firestore if a name is provided.
+         * Submits the player's score to Local Storage if a name is provided.
          * Then displays the rankings.
          */
-        async function submitScore() {
+        function submitScore() {
             const playerName = playerNameInput.value.trim();
             if (!playerName) {
                 // Provide visual feedback for empty name
@@ -1931,66 +1949,65 @@
                 return;
             }
 
-            hideAllModals(); // Hide submit modal
-
-            try {
-                // Add score to the public rankings collection
-                const rankingsCollection = collection(db, `artifacts/${appId}/public/data/rankings`);
-                await addDoc(rankingsCollection, {
-                    userId: userId, // Store user ID
-                    userName: playerName,
-                    time: Math.floor(gameState.gameTime / 1000), // Store time in seconds
-                    kills: gameState.killCount,
-                    timestamp: Date.now() // Record submission time
-                });
-                console.log("Score submitted successfully!");
-                await displayRankings(); // Show rankings after successful submission
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                // If submission fails, show the regular game over modal
-                // MODIFIED: Now goes to start modal on error as well
-                hideAllModals();
-                startModal.classList.remove('hidden');
-                startModal.classList.add('flex');
-            }
+            // Save score to local storage
+            const score = {
+                userName: playerName,
+                time: Math.floor(gameState.gameTime / 1000), // Store time in seconds
+                kills: gameState.killCount,
+                timestamp: Date.now() // Record submission time
+            };
+            rankingManager.addScore(score);
+            
+            showFeedbackMessage("점수가 성공적으로 기록되었습니다!", true);
+            hideAllModals(); // Hide game over modal
+            rankingManager.displayRankingModal(); // Show rankings after successful submission
         }
 
         /**
-         * Fetches and displays the top 10 rankings from Firestore.
-         * Sorts data in memory as per instructions.
+         * Manages ranking display logic using Local Storage.
          */
-        async function displayRankings() {
-            rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4">랭킹 불러오는 중...</td></tr>';
-            rankingModal.classList.remove('hidden');
-            rankingModal.classList.add('flex');
+        const rankingManager = {
+            getScores() {
+                const scoresJson = localStorage.getItem(LOCAL_STORAGE_SCORES_KEY);
+                return scoresJson ? JSON.parse(scoresJson) : [];
+            },
 
-            try {
-                const rankingsCollection = collection(db, `artifacts/${appId}/public/data/rankings`);
-                // Fetch all documents from the collection (or a large subset if performance is an issue for many docs)
-                const querySnapshot = await getDocs(rankingsCollection);
+            saveScores(scores) {
+                localStorage.setItem(LOCAL_STORAGE_SCORES_KEY, JSON.stringify(scores));
+            },
 
-                let allScores = [];
-                querySnapshot.forEach((doc) => {
-                    allScores.push(doc.data());
-                });
-
-                // Sort scores in memory: primary sort by time (descending), secondary sort by kills (descending)
-                allScores.sort((a, b) => {
+            addScore(newScore) {
+                const scores = this.getScores();
+                scores.push(newScore);
+                // Sort scores: primary by time (desc), secondary by kills (desc)
+                scores.sort((a, b) => {
                     if (b.time !== a.time) {
                         return b.time - a.time;
                     }
                     return b.kills - a.kills;
                 });
+                // Optionally limit the number of stored scores to prevent excessive data
+                // For example, keep only the top 100 scores
+                // const MAX_STORED_SCORES = 100;
+                // if (scores.length > MAX_STORED_SCORES) {
+                //     scores.splice(MAX_STORED_SCORES);
+                // }
+                this.saveScores(scores);
+            },
 
-                // Take only the top 10 scores to display
-                const top10Scores = allScores.slice(0, 10);
+            async displayRankingModal() {
+                rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4">랭킹 불러오는 중...</td></tr>';
+                rankingModal.classList.remove('hidden');
+                rankingModal.classList.add('flex');
 
+                const allScores = this.getScores();
                 rankingList.innerHTML = ''; // Clear loading message
-                if (top10Scores.length === 0) {
+
+                if (allScores.length === 0) {
                     rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-400">아직 랭킹이 없습니다.</td></tr>';
                 } else {
                     let rank = 1;
-                    top10Scores.forEach((data) => {
+                    allScores.forEach((data) => {
                         const row = `
                             <tr class="border-b border-stone-700 last:border-b-0 hover:bg-stone-700">
                                 <td class="py-2 px-2 sm:py-2 sm:px-4">${rank++}</td>
@@ -2002,11 +2019,103 @@
                         rankingList.innerHTML += row;
                     });
                 }
-            } catch (e) {
-                console.error("Error fetching rankings: ", e);
-                rankingList.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-red-400">랭킹을 불러오는데 실패했습니다.</td></tr>';
+            },
+
+            hideRankingModal() {
+                rankingModal.classList.add('hidden');
+                rankingModal.classList.remove('flex');
+            }
+        };
+
+        /**
+         * Fetches and displays the top N rankings on the start screen.
+         * @param {number} limit - The maximum number of rankings to display.
+         */
+        function displayTopRankingsOnStartScreen(limit = 3) {
+            startRankingList.innerHTML = '<tr><td colspan="4" class="text-center py-2 text-gray-500">랭킹 불러오는 중...</td></tr>';
+            const allScores = rankingManager.getScores();
+            const topScores = allScores.slice(0, limit);
+
+            startRankingList.innerHTML = ''; // Clear loading message
+            if (topScores.length === 0) {
+                startRankingList.innerHTML = '<tr><td colspan="4" class="text-center py-2 text-gray-500">아직 랭킹이 없습니다.</td></tr>';
+            } else {
+                let rank = 1;
+                topScores.forEach((data) => {
+                    const row = `
+                        <tr class="border-b border-stone-700 last:border-b-0">
+                            <td class="py-1 px-1 sm:py-2 sm:px-2">${rank++}</td>
+                            <td class="py-1 px-1 sm:py-2 sm:px-2">${data.userName}</td>
+                            <td class="py-1 px-1 sm:py-2 sm:px-2 text-right">${formatTime(data.time * 1000)}</td>
+                            <td class="py-1 px-1 sm:py-2 sm:px-2 text-right">${data.kills}</td>
+                        </tr>
+                    `;
+                    startRankingList.innerHTML += row;
+                });
             }
         }
+
+        /**
+         * Displays the highest local score on the start screen.
+         */
+        function displayLocalHighScore() {
+            const allScores = rankingManager.getScores();
+            if (allScores.length > 0) {
+                const highestScore = allScores[0]; // Scores are already sorted descending
+                localHighScoreEl.textContent = `${highestScore.userName} - ${formatTime(highestScore.time * 1000)} (${highestScore.kills} 처치)`;
+            } else {
+                localHighScoreEl.textContent = '아직 최고 기록이 없습니다.';
+            }
+        }
+
+        /**
+         * Calculates and displays a random global rank percentage based on the local high score.
+         * This is for motivational purposes and is not based on actual global data.
+         */
+        function updateGlobalRankPercentage() {
+            const allScores = rankingManager.getScores();
+            if (allScores.length === 0) {
+                globalRankPercentageEl.textContent = '글로벌 상위 1%에 도전하세요!';
+                globalRankPercentageEl.classList.remove('text-amber-400', 'font-bold');
+                globalRankPercentageEl.classList.add('text-gray-400');
+                return;
+            }
+
+            const highestLocalScore = allScores[0]; // Already sorted by time then kills
+            const localTime = highestLocalScore.time;
+            const localKills = highestLocalScore.kills;
+
+            // Calculate a score metric that combines time and kills
+            // Give more weight to time, but kills also contribute
+            const localCombinedScore = localTime * 10 + localKills;
+            const globalCombinedScore = GLOBAL_BEST_TIME_SECONDS * 10 + GLOBAL_BEST_KILLS;
+
+            // Calculate a raw percentage based on how close the local score is to the global best
+            // Max 99% for local, minimum 1%
+            let rawPercentage = (localCombinedScore / globalCombinedScore) * 100;
+            rawPercentage = Math.min(99, Math.max(1, rawPercentage)); // Clamp between 1% and 99%
+
+            // Adjust percentage to be more encouraging, especially for lower scores
+            // For example, if rawPercentage is 10%, we might want to say "상위 80%"
+            // This is a simple inverse mapping for "top X%"
+            let motivationalPercentage;
+            if (rawPercentage >= 90) { // Very high score
+                motivationalPercentage = Math.floor(Math.random() * 5) + 1; // Top 1-5%
+            } else if (rawPercentage >= 70) { // High score
+                motivationalPercentage = Math.floor(Math.random() * 10) + 5; // Top 5-15%
+            } else if (rawPercentage >= 50) { // Mid score
+                motivationalPercentage = Math.floor(Math.random() * 15) + 15; // Top 15-30%
+            } else if (rawPercentage >= 30) { // Lower mid score
+                motivationalPercentage = Math.floor(Math.random() * 20) + 30; // Top 30-50%
+            } else { // Low score
+                motivationalPercentage = Math.floor(Math.random() * 30) + 50; // Top 50-80%
+            }
+            
+            globalRankPercentageEl.textContent = `당신은 글로벌 상위 ${motivationalPercentage}%에 해당합니다!`;
+            globalRankPercentageEl.classList.add('text-amber-400', 'font-bold');
+            globalRankPercentageEl.classList.remove('text-gray-400');
+        }
+
 
         // --- Event Listeners ---
         // Handle window resize to adjust canvas dimensions
@@ -2037,13 +2146,7 @@
         restartButton.addEventListener('click', restartGame);
         submitScoreButton.addEventListener('click', submitScore);
         
-        // MODIFIED: Skip and Close Ranking buttons now lead to the start modal and initialize the game
-        skipScoreButton.addEventListener('click', () => {
-            initializeGame(); // Fully reset the game state
-            hideAllModals();
-            startModal.classList.remove('hidden');
-            startModal.classList.add('flex');
-        });
+        // MODIFIED: Close Ranking button now leads to the start modal and initializes the game
         closeRankingButton.addEventListener('click', () => {
             initializeGame(); // Fully reset the game state
             hideAllModals();
@@ -2051,10 +2154,11 @@
             startModal.classList.add('flex');
         });
         musicToggleButton.addEventListener('click', toggleMusic); // Music toggle button listener
+        // MODIFIED: Changed event listener to use arrow function for correct 'this' context
+        viewAllRankingsButton.addEventListener('click', () => rankingManager.displayRankingModal()); // New: View all rankings button
 
-        // Initialize Firebase and then the game when the window loads
+        // Initialize the game when the window loads
         window.onload = async () => {
-            await initFirebase(); // Ensure Firebase is initialized before game starts
             initBackgroundMusic(); // Initialize background music
             initializeGame();
             // No need to call initializeBottomAd() as Kakao Adfit script handles it
